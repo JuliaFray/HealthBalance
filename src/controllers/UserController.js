@@ -87,12 +87,8 @@ export const status = async (req, res) => {
             })
         }
 
-        const {passwordHash, ...userData} = user._doc;
-
         res.json({
-            data: userData,
-            resultCode: 0,
-            token: req.token
+            resultCode: 0
         });
 
     } catch (err) {

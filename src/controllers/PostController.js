@@ -21,7 +21,7 @@ export const createPost = async (req, res) => {
 
         res.json({
             resultCode: 0,
-            post: post
+            data: post
         });
     } catch (err) {
         console.log(err);
@@ -34,7 +34,10 @@ export const createPost = async (req, res) => {
 
 export const getAll = async (req, res) => {
     try {
-        const posts = await Post.find().populate('author').exec();
+        const posts = await Post.find()
+            .select(["-__v", "-updatedAt", "-author.__v"])
+            .populate({path: 'author', select: (["-__v", "-passwordHash", "-email", "-photos", "-updatedAt", "-createdAt"])})
+            .exec();
 
         res.json({
             resultCode: 0,
@@ -65,7 +68,7 @@ export const getPost = async (req, res) => {
                 })
             }
             res.json({
-                post: post
+                data: post
             })
         }).catch(err => {
             console.log(err);
@@ -101,13 +104,14 @@ export const updatePost = async (req, res) => {
         ).exec();
 
         res.json({
-            status: true
+            resultCode: 0
         });
 
     } catch (err) {
         console.log(err);
         res.status(500).json({
-            error: ERRORS.UNDEFINED_ERROR
+            resultCode: 1,
+            message: ERRORS.UNDEFINED_ERROR
         })
     }
 }
@@ -121,24 +125,27 @@ export const deletePost = async (req, res) => {
         ).then((post) => {
             if (!post) {
                 res.status(404).json({
-                    error: ERRORS.NOT_FOUND
+                    resultCode: 1,
+                    message: ERRORS.NOT_FOUND
                 })
             }
 
             res.json({
-                status: true
+                resultCode: 0
             })
         }).catch(err => {
             console.log(err);
             res.status(400).json({
-                error: ERRORS.UNDEFINED_ERROR
+                resultCode: 1,
+                message: ERRORS.UNDEFINED_ERROR
             })
         });
 
     } catch (err) {
         console.log(err);
         res.status(500).json({
-            error: ERRORS.UNDEFINED_ERROR
+            resultCode: 1,
+            message: ERRORS.UNDEFINED_ERROR
         })
     }
 }
