@@ -22,13 +22,18 @@ const PostSchema = new mongoose.Schema({
     viewsCount: {
         type: Number,
         default: 0
-    },
-    likes: {
-        type: Number,
-        default: 0
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
 });
+
+PostSchema.virtual('likes', {
+    ref: 'PostUser',
+    localField: '_id',
+    foreignField: 'postId',
+    count: true
+})
 
 export default mongoose.model('Post', PostSchema);

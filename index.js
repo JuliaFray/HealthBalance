@@ -4,12 +4,12 @@ import checkAuth from './src/utils/checkAuth.js';
 
 import {loginValidation, postCreateValidation, registerValidation} from './src/validations/validation.js';
 
-import {login, register, status} from './src/controllers/UserController.js';
-import {createPost, deletePost, getAll, getLastTags, getPost, updatePost} from './src/controllers/PostController.js';
+import {login, register, status} from './src/controllers/AuthController.js';
+import {createPost, deletePost, getAll, getLastTags, getPopularPost, getPost, setLikes, updatePost} from './src/controllers/PostController.js';
 import multer from 'multer';
 import handleErrors from "./src/utils/handleErrors.js";
 import cors from "cors";
-import {getProfile} from "./src/controllers/ProfileController.js";
+import {getAllUsers, getProfile} from "./src/controllers/ProfileController.js";
 
 //RXXugsdtnQeV96uu
 //JoE8prZL4Mhy44Ww
@@ -47,8 +47,10 @@ app.get(`${auth}/status`, checkAuth, status);
 //========== posts ==========//
 const posts = '/posts';
 
-app.get(`${posts}`, getAll);
-app.get(`${posts}/:id`, getPost);
+app.get(`${posts}`, checkAuth, getAll);
+app.put(`${posts}/:id/like`, checkAuth, setLikes);
+app.get(`${posts}/popular`, checkAuth, getPopularPost);
+app.get(`${posts}/:id`, checkAuth, getPost);
 app.post(`${posts}`, checkAuth, postCreateValidation, handleErrors, createPost);
 app.put(`${posts}/:id`, checkAuth, postCreateValidation, handleErrors, updatePost);
 app.delete(`${posts}/:id`, checkAuth, deletePost);
@@ -75,6 +77,10 @@ app.get(`${profile}/:id`, checkAuth, getProfile);
 // app.get(`${profile}/status/:id`, checkAuth, null);
 // app.put(`${profile}/status`, null);
 // app.put(`${profile}`, null);
+
+//========== users ==========//
+const users = '/users';
+app.get(`${users}`, checkAuth, getAllUsers);
 
 
 //==========Start app==========//

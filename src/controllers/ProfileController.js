@@ -1,22 +1,25 @@
 import * as ERRORS from '../utils/errors.js';
 import Profile from './../models/Profile.js';
+import User from "../models/User.js";
 import Contact from "../models/Contact.js";
 
-// export const getAll = async (req, res) => {
-//     try {
-//         const posts = await Post.find().populate('author').exec();
-//
-//         res.json({
-//             posts: posts
-//         });
-//     } catch (err) {
-//         console.log(err);
-//         res.status(500).json({
-//             error: ERRORS.UNDEFINED_ERROR
-//         })
-//     }
-//
-// };
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find().exec();
+
+        res.json({
+            resultCode: 0,
+            data: users,
+            totalCount: users.length
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            resultCode: 1,
+            error: ERRORS.UNDEFINED_ERROR
+        })
+    }
+};
 
 export const getProfile = async (req, res) => {
     try {
