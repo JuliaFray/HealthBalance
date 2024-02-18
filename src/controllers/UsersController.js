@@ -1,57 +1,40 @@
 import * as ERRORS from '../utils/errors.js';
 import Profile from './../models/Profile.js';
 import User from "../models/User.js";
-import Contact from "../models/Contact.js";
+import Contact from '../models/Contact.js';
 
 export const getAllUsers = async (req, res) => {
-    try {
-        const users = await User.find().exec();
+    const users = await User.find().exec();
 
-        res.json({
-            resultCode: 0,
-            data: users,
-            totalCount: users.length
-        });
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({
-            resultCode: 1,
-            error: ERRORS.UNDEFINED_ERROR
-        })
-    }
+    res.json({
+        resultCode: 0,
+        data: users,
+        totalCount: users.length
+    });
 };
 
 export const getProfile = async (req, res) => {
-    try {
-        const profileId = req.params.id;
+    const profileId = req.params.id;
 
-        Profile.findById(profileId).populate('contacts')
-            .then((profile) => {
-                if (!profile) {
-                    res.status(404).json({
-                        resultCode: 1,
-                        error: ERRORS.NOT_FOUND
-                    })
-                }
-                res.json({
-                    resultCode: 0,
-                    data: profile
+    Profile.findById(profileId).populate('contacts')
+        .then((profile) => {
+            if (!profile) {
+                res.status(404).json({
+                    resultCode: 1,
+                    error: ERRORS.NOT_FOUND
                 })
-            }).catch(err => {
-            console.log(err);
-            res.status(400).json({
-                resultCode: 1,
-                error: ERRORS.UNDEFINED_ERROR
+            }
+            res.json({
+                resultCode: 0,
+                data: profile
             })
-        });
-
-    } catch (err) {
+        }).catch(err => {
         console.log(err);
-        res.status(500).json({
+        res.status(400).json({
             resultCode: 1,
             error: ERRORS.UNDEFINED_ERROR
         })
-    }
+    });
 }
 
 //

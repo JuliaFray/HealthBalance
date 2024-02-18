@@ -1,17 +1,39 @@
 import mongoose from 'mongoose';
 
 const ProfileSchema = new mongoose.Schema({
-    lookingForAJob: Boolean,
-    lookingForAJobDescription: Boolean,
-    fullName: {
+    firstName: {
         type: String,
         required: true
     },
+    secondName: {
+        type: String,
+        required: true
+    },
+    lastName: {
+        type: String,
+        required: false
+    },
+    avatarUrl: String,
+    age: Number,
+    city: String,
     aboutMe: String,
+    status: {
+        type: String,
+        get: () => this.status.toLowerCase(),
+        set: v => v.toLowerCase()
+    },
     contacts: {
         type: mongoose.Schema.ObjectId,
         ref: 'Contact',
-        required: true
+        required: false
+    },
+    followed: {
+        type: Boolean,
+        default: false
+    },
+    photos: {
+        type: Array,
+        default: []
     }
 }, {
     timestamps: true

@@ -3,77 +3,78 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import * as ERRORS from '../utils/errors.js';
 import {EXPIRES_KEY, SECRET_KEY} from '../utils/constants.js';
+import Profile from "../models/Profile.js";
+import asyncErrorHandler from './../utils/asyncErrorHandler.js';
 
-export const register = async (req, res) => {
-    try {
-        const pass = req.body.password;
-        const salt = await bcrypt.genSalt(10);
-        const passHash = await bcrypt.hash(pass, salt);
+export const register = asyncErrorHandler(async (req, res) => {
+    const pass = req.body.password;
+    const salt = await bcrypt.genSalt(10);
+    const passHash = await bcrypt.hash(pass, salt);
 
-        const doc = new User({
-            email: req.body.email,
-            fullName: req.body.fullName,
-            name: req.body.fullName,
-            avatarUrl: req.body.avatarUrl,
-            passwordHash: passHash
-        });
+    const docUser = new User({
+        email: req.body.email,
+        passwordHash: passHash
+    });
 
-        const user = await doc.save();
+    const docProfile = new Profile({
+        _id: docUser._id,
+        firstName: req.body.firstName,
+        secondName: req.body.secondName,
+        lastName: req.body.lastName
+    });
 
-        const token = jwt.sign({_id: user._id}, SECRET_KEY, {expiresIn: EXPIRES_KEY});
+    await docUser.save()
+        .then(async () => {
+            await docProfile.save()
+                .then(() => {
+                    const token = jwt.sign(
+                        {_id: docUser._id},
+                        SECRET_KEY,
+                        {expiresIn: EXPIRES_KEY}
+                    );
 
-        const {passwordHash, ...userData} = user._doc;
+                    const {passwordHash, ...userData} = docUser._doc;
 
-        res.json({
-            status: true,
-            user: userData,
-            token: token
-        });
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({
-            status: false,
-            error: ERRORS.UNDEFINED_ERROR
+                    res.json({
+                        resultCode: 0,
+                        user: userData,
+                        token: token
+                    });
+                })
         })
-    }
-
-};
+});
 
 export const login = async (req, res) => {
-    try {
-        const user = await User.findOne({email: req.body.email});
+    const user = await User.findOne({email: req.body.email});
 
-        if (!user) {
-            return res.status(404).json({
-                resultCode: 1,
-                message: ERRORS.NOT_FOUND
-            })
-        }
-
-        const isValidPass = await bcrypt.compare(req.body.password, user._doc.passwordHash);
-        if (!isValidPass) {
-            return res.status(400).json({
-                resultCode: 1,
-                message: ERRORS.WRONG_LOGIN_PASS
-            })
-        }
-
-        const token = jwt.sign({_id: user._id}, SECRET_KEY, {expiresIn: EXPIRES_KEY});
-
-        const {passwordHash, ...userData} = user._doc;
-
-        res.json({
-            resultCode: 0,
-            data: userData,
-            token: token
-        });
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({
+    if (!user) {
+        return res.status(404).json({
             resultCode: 1,
-            error: ERRORS.UNDEFINED_ERROR
+            message: ERRORS.NOT_FOUND
         })
     }
+
+    const isValidPass = await bcrypt.compare(req.body.password, user._doc.passwordHash);
+    if (!isValidPass) {
+        return res.status(400).json({
+            resultCode: 1,
+            message: ERRORS.WRONG_LOGIN_PASS
+        })
+    }
+
+    const token = jwt.sign(
+        {_id: user._id},
+        SECRET_KEY,
+        {expiresIn: EXPIRES_KEY}
+    );
+
+    const {passwordHash, ...userData} = user._doc;
+
+    res.json({
+        resultCode: 0,
+        data: userData,
+        token: token
+    });
 };
 
 export const status = async (req, res) => {
