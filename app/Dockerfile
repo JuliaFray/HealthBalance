@@ -10,7 +10,7 @@ COPY ./ /app
 # Install the application dependencies
 RUN npm install
 
-expose 8080
+expose 8000
 
 # Define the entry point for the container
 CMD ["node", "app.js"]
