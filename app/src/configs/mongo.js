@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 
-const dbURI = 'mongodb+srv://dmj.vhcqjvw.mongodb.net/dmj';
+const dbURI = process.env.DB_URI;
 const dbOptions = {
-    user: 'admin',
-    pass: 'JoE8prZL4Mhy44Ww',
+    user: process.env.DB_USER,
+    pass: process.env.DB_PASS,
     w: 'majority',
     retryWrites: true
 };
