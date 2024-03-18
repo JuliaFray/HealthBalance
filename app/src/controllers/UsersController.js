@@ -1,5 +1,5 @@
 import * as ERRORS from '../utils/errors.js';
-import Profile from './../models/Profile.js';
+import Profile from '../models/Profile.js';
 import User from "../models/User.js";
 import Contact from '../models/Contact.js';
 

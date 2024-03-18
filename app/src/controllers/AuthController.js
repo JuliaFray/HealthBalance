@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import * as ERRORS from '../utils/errors.js';
 import {EXPIRES_KEY, SECRET_KEY} from '../utils/constants.js';
 import Profile from "../models/Profile.js";
-import asyncErrorHandler from './../utils/asyncErrorHandler.js';
+import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 
 export const register = asyncErrorHandler(async (req, res) => {
     const pass = req.body.password;
