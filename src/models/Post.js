@@ -18,7 +18,7 @@ const PostSchema = new mongoose.Schema({
     imageUrl: String,
     author: {
         type: mongoose.Schema.ObjectId,
-        ref: 'User',
+        ref: 'Profile',
         required: true
     },
     viewsCount: {

@@ -2,13 +2,8 @@ import mongoose from 'mongoose';
 
 const ContactSchema = new mongoose.Schema({
     github: String,
-    vk: String,
-    facebook: String,
-    Instagram: String,
-    twitter: String,
     website: String,
-    youtube: String,
-    mainLink: String,
+    phone: String
 }, {
     timestamps: true
 });

@@ -89,7 +89,8 @@ export const status = async (req, res) => {
         }
 
         res.json({
-            resultCode: 0
+            resultCode: 0,
+            data: req.userId
         });
 
     } catch (err) {

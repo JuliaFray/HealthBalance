@@ -2,10 +2,10 @@
 FROM node:21.1.0-slim
 
 # Set the working directory in the container
-WORKDIR /app
+WORKDIR /
 
 # Copy the application files into the working directory
-COPY ./ /app
+COPY . /
 
 # Install the application dependencies
 RUN npm install

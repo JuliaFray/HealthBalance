@@ -1,11 +1,10 @@
+import 'dotenv/config'
 import cors from 'cors';
 import createError from 'http-errors';
 import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
-import {fileURLToPath} from 'url';
-import * as ERRORS from './src/utils/errors.js';
 import * as mongo from './src/configs/mongo.js'
 import globalErrorHandler from './src/utils/handleErrors.js'
 
@@ -15,8 +14,7 @@ import authRouter from './src/routes/auth.js';
 import postsRouter from './src/routes/posts.js';
 import profileRouter from './src/routes/profile.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.resolve(path.dirname(''));
 
 const app = express();
 const mongoDb = mongo;

@@ -3,16 +3,12 @@ import mongoose from 'mongoose';
 const CommentSchema = new mongoose.Schema({
     author: {
         type: mongoose.Schema.ObjectId,
-        ref: 'User',
+        ref: 'Profile',
         required: true
     },
     post: {
         type: mongoose.Schema.ObjectId,
         ref: 'Post',
-        required: true
-    },
-    onum: {
-        type: Number,
         required: true
     },
     text: {

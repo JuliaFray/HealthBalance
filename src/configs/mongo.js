@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import 'dotenv/config'
 
 const dbURI = process.env.DB_URI;
 const dbOptions = {

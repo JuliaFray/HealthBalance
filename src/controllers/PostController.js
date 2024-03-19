@@ -31,8 +31,15 @@ export const getAll = async (req, res) => {
         .select(["-__v", "-updatedAt", "-author.__v"])
         .populate('likes')
         .populate('comments')
-        .populate({path: 'author', select: (["-__v", "-passwordHash", "-email", "-photos", "-updatedAt", "-createdAt"])})
+        .populate({
+                path: 'author',
+                select: (["-__v", "-age", "-city", "-status", "-contacts"])
+            }
+        )
+        .sort('-viewsCount')
         .exec();
+
+    posts.shift();
 
     res.json({
         resultCode: 0,
@@ -107,7 +114,12 @@ export const getPost = async (req, res) => {
         {returnDocument: 'after'}
     )
         .populate('author')
-        .populate('comments')
+        .populate({
+            path: 'comments',
+            populate: {
+                path: 'author'
+            }
+        })
         .then((post) => {
             if (!post) {
                 res.status(404).json({
@@ -182,3 +194,20 @@ export const getLastTags = async (req, res) => {
         data: tags
     })
 };
+
+export const createComment = async (req, res) => {
+    const postId = req.params.id;
+
+    const doc = new Comment({
+        text: req.body.text,
+        author: req.userId,
+        post: postId
+    });
+
+    const comment = await doc.save();
+
+    res.json({
+        resultCode: 0,
+        data: comment
+    });
+}

@@ -5,6 +5,7 @@ import checkAuth from "../utils/checkAuth.js";
 import multer from "multer";
 
 const router = express.Router();
+const __dirname = path.resolve(path.dirname(''));
 
 const storage = multer.diskStorage({
     destination: (_, __, cb) => {
