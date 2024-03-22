@@ -2,6 +2,7 @@ import Post from '../models/Post.js';
 import * as ERRORS from '../utils/errors.js';
 import PostUser from '../models/PostUser.js';
 import Comment from '../models/Comment.js';
+import {getFile} from "./FileController.js";
 
 export const createPost = async (req, res) => {
     const tags = req.body.tags instanceof Array
@@ -13,7 +14,7 @@ export const createPost = async (req, res) => {
         title: req.body.title,
         text: req.body.text,
         tags: tags,
-        imageUrl: req.body.imageUrl,
+        imageId: req.body.imageId,
         author: req.userId
     });
 
@@ -94,8 +95,11 @@ export const getPopularPost = async (req, res) => {
                     error: ERRORS.NOT_FOUND
                 })
             }
-            res.json({
-                data: post
+            getFile(post.imageId).then(it => {
+                post._doc.image = it[0];
+                res.json({
+                    data: post
+                })
             })
         }).catch(err => {
         console.log(err);
@@ -126,9 +130,13 @@ export const getPost = async (req, res) => {
                     error: ERRORS.NOT_FOUND
                 })
             }
-            res.json({
-                data: post
+            getFile(post.imageId).then(it => {
+                post._doc.image = it[0];
+                res.json({
+                    data: post
+                })
             })
+
         }).catch(err => {
         console.log(err);
         res.status(400).json({
@@ -150,7 +158,7 @@ export const updatePost = async (req, res) => {
             title: req.body.title,
             text: req.body.text,
             tags: tags,
-            imageUrl: req.body.imageUrl
+            imageId: req.body.imageId
         }
     ).exec();
 

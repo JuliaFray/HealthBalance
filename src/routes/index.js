@@ -1,33 +1,79 @@
 import express from 'express';
-import path from 'path';
 import {getLastTags} from "../controllers/PostController.js";
 import checkAuth from "../utils/checkAuth.js";
-import multer from "multer";
+import upload from './../utils/gridFsStorage.js';
+import {getFileById, uploadFile} from "../controllers/FileController.js";
+
 
 const router = express.Router();
-const __dirname = path.resolve(path.dirname(''));
-
-const storage = multer.diskStorage({
-    destination: (_, __, cb) => {
-        cb(null, path.join(__dirname, 'uploads'));
-    },
-    filename: (_, file, cb) => {
-        cb(null, file.originalname);
-    }
-});
-
-const upload = multer({storage});
-
-// router.use(checkAuth);
-
 router.get('/tags', checkAuth, getLastTags);
 
-router.post('/upload', checkAuth, upload.single('image'), (req, res) => {
-    res.json({
-        status: true,
-        url: `/uploads/${req.file.filename}`
-    });
-});
+router.post('/upload', checkAuth, upload.single('image'), uploadFile);
+router.get("/image/:id", checkAuth, getFileById);
+
+// router.get("/images", async (req, res) => {
+//     try {
+//         await mongoClient.connect()
+//
+//         const database = mongoClient.db("dmj")
+//         const images = database.collection("photos.files")
+//         const cursor = images.find({})
+//         const count = await cursor.count()
+//         if (count === 0) {
+//             return res.status(404).send({
+//                 message: "Error: No Images found",
+//             })
+//         }
+//
+//         const allImages = []
+//
+//         await cursor.forEach(item => {
+//             allImages.push(item)
+//         })
+//
+//         res.send({files: allImages})
+//     } catch (error) {
+//         console.log(error)
+//         res.status(500).send({
+//             message: "Error Something went wrong",
+//             error,
+//         })
+//     }
+// })
+//
+// router.get("/download/:filename", async (req, res) => {
+//     try {
+//         await mongoClient.connect()
+//
+//         const database = mongoClient.db("dmj")
+//
+//         const imageBucket = new GridFSBucket(database, {
+//             bucketName: "photos",
+//         })
+//
+//         let downloadStream = imageBucket.openDownloadStreamByName(
+//             req.params.filename
+//         )
+//
+//         downloadStream.on("data", function (data) {
+//             return res.status(200).write(data)
+//         })
+//
+//         downloadStream.on("error", function (data) {
+//             return res.status(404).send({error: "Image not found"})
+//         })
+//
+//         downloadStream.on("end", () => {
+//             return res.end()
+//         })
+//     } catch (error) {
+//         console.log(error)
+//         res.status(500).send({
+//             message: "Error Something went wrong",
+//             error,
+//         })
+//     }
+// })
 
 export default router;
 
