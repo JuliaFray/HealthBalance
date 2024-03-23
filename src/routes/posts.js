@@ -2,14 +2,14 @@ import express from 'express';
 import {postCreateValidation} from "../utils/validation.js";
 import handleErrors from "../utils/handleErrors.js";
 import checkAuth from "../utils/checkAuth.js";
-import {getAll, setLikes, getPopularPost, getPost, createPost, updatePost, deletePost, createComment} from "../controllers/PostController.js";
+import {getAll, setLike, getPopularPost, getPost, createPost, updatePost, deletePost, createComment} from "../controllers/PostController.js";
 
 const router = express.Router();
 
 router.use(checkAuth);
 
 router.get('/', getAll);
-router.put('/:id/like', setLikes);
+router.put('/:id/like', setLike);
 router.get('/popular', getPopularPost);
 router.get('/:id', getPost);
 router.post('/', postCreateValidation, handleErrors, createPost);

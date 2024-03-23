@@ -2,7 +2,6 @@ import Post from '../models/Post.js';
 import * as ERRORS from '../utils/errors.js';
 import PostUser from '../models/PostUser.js';
 import Comment from '../models/Comment.js';
-import {getFile} from "./FileController.js";
 
 export const createPost = async (req, res) => {
     const tags = req.body.tags instanceof Array
@@ -18,7 +17,6 @@ export const createPost = async (req, res) => {
         author: req.userId
     });
 
-
     const post = await doc.save();
 
     res.json({
@@ -27,20 +25,42 @@ export const createPost = async (req, res) => {
     });
 };
 
+
 export const getAll = async (req, res) => {
-    const posts = await Post.find()
-        .select(["-__v", "-updatedAt", "-author.__v"])
-        .populate('likes')
-        .populate('comments')
+    const tags = req.query['tags'];
+
+    const popular = await Post.findOne()
+        .sort('-viewsCount');
+
+    let where = {};
+
+    if (tags) {
+        where = {tags: {$in: tags}}
+    } else {
+        where = {
+            _id: {
+                $not: {
+                    $in: popular._id
+                }
+            }
+        }
+    }
+
+    const posts = await Post.find(where)
+        .select(['-__v', '-updatedAt', '-author.__v'])
+        .populate({
+            path: 'likes',
+            match: {'user': {$in: req.userId}}
+        })
         .populate({
                 path: 'author',
-                select: (["-__v", "-age", "-city", "-status", "-contacts"])
+                populate: {
+                    path: 'avatar'
+                },
+                select: (['-__v', '-age', '-city', '-status', '-contacts'])
             }
         )
-        .sort('-viewsCount')
         .exec();
-
-    posts.shift();
 
     res.json({
         resultCode: 0,
@@ -48,7 +68,7 @@ export const getAll = async (req, res) => {
     });
 };
 
-export const setLikes = async (req, res) => {
+export const setLike = async (req, res) => {
     await PostUser.findOneAndDelete({post: req.params.id, user: req.userId})
         .then(async (rec) => {
             if (rec) {
@@ -86,20 +106,16 @@ export const setLikes = async (req, res) => {
 
 export const getPopularPost = async (req, res) => {
     Post.findOne()
-        .populate('author')
-        .populate('comments')
         .sort('-viewsCount')
+        .populate('image')
         .then((post) => {
             if (!post) {
                 res.status(404).json({
                     error: ERRORS.NOT_FOUND
                 })
             }
-            getFile(post.imageId).then(it => {
-                post._doc.image = it[0];
-                res.json({
-                    data: post
-                })
+            res.json({
+                data: post
             })
         }).catch(err => {
         console.log(err);
@@ -117,26 +133,31 @@ export const getPost = async (req, res) => {
         {$inc: {viewsCount: 1}},
         {returnDocument: 'after'}
     )
-        .populate('author')
+        .populate({
+            path: 'author',
+            populate: {
+                path: 'avatar'
+            },
+        })
         .populate({
             path: 'comments',
             populate: {
-                path: 'author'
+                path: 'author',
+                populate: {
+                    path: 'avatar'
+                },
             }
         })
+        .populate('image')
         .then((post) => {
             if (!post) {
                 res.status(404).json({
                     error: ERRORS.NOT_FOUND
                 })
             }
-            getFile(post.imageId).then(it => {
-                post._doc.image = it[0];
-                res.json({
-                    data: post
-                })
+            res.json({
+                data: post
             })
-
         }).catch(err => {
         console.log(err);
         res.status(400).json({

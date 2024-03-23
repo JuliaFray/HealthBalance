@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import File from "./File.js";
 
 const ProfileSchema = new mongoose.Schema({
     firstName: {
@@ -13,30 +14,26 @@ const ProfileSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-    avatarUrl: String,
+    avatarId: {
+        type: mongoose.Schema.ObjectId
+    },
     age: Number,
     city: String,
-    // aboutMe: String,
-    // status: {
-    //     type: String,
-    //     get: () => this.status.toLowerCase(),
-    //     set: v => v.toLowerCase()
-    // },
     contacts: {
         type: mongoose.Schema.ObjectId,
         ref: 'Contact',
         required: false
     },
-    // followed: {
-    //     type: Boolean,
-    //     default: false
-    // },
-    // photos: {
-    //     type: Array,
-    //     default: []
-    // }
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: {virtuals: true},
+    toObject: {virtuals: true}
 });
+
+ProfileSchema.virtual('avatar', {
+    ref: File.Chunk,
+    localField: 'avatarId',
+    foreignField: 'files_id'
+})
 
 export default mongoose.model('Profile', ProfileSchema);

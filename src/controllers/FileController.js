@@ -1,5 +1,5 @@
-import {MongoClient, ObjectId} from "mongodb";
-import {UNDEFINED_ERROR} from "../utils/errors.js";
+import {MongoClient, ObjectId} from 'mongodb';
+import {UNDEFINED_ERROR} from '../utils/errors.js';
 
 const url = process.env.DB_URI_GET_FILES;
 const mongoClient = new MongoClient(url);
@@ -33,12 +33,16 @@ export const getFileById = async (req, res) => {
 export const getFile = async (imageId) => {
     await mongoClient.connect()
 
-    const chunk = mongoClient.db("dmj")
-        .collection("photos.chunks")
+    const chunk = mongoClient.db('dmj')
+        .collection('photos.chunks')
         .find({'files_id': new ObjectId(imageId)}).toArray();
 
     const images = [];
     (await chunk).forEach(it => images.push(it));
 
     return images;
+}
+
+export const removeFile = async (imageId) => {
+    // todo remove file
 }

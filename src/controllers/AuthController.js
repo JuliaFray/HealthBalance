@@ -37,7 +37,7 @@ export const register = asyncErrorHandler(async (req, res) => {
 
                     res.json({
                         resultCode: 0,
-                        user: userData,
+                        data: userData,
                         token: token
                     });
                 })

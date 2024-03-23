@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import PostUser from "./PostUser.js";
 import Comment from "./Comment.js";
+import File from './File.js'
 
 const PostSchema = new mongoose.Schema({
     title: {
@@ -34,16 +35,22 @@ const PostSchema = new mongoose.Schema({
 });
 
 PostSchema.virtual('likes', {
-    ref: 'PostUser',
+    ref: PostUser,
     localField: '_id',
     foreignField: 'post',
     count: true
 })
 
 PostSchema.virtual('comments', {
-    ref: 'Comment',
+    ref: Comment,
     localField: '_id',
     foreignField: 'post'
+})
+
+PostSchema.virtual('image', {
+    ref: File.Chunk,
+    localField: 'imageId',
+    foreignField: 'files_id'
 })
 
 PostSchema.pre('findOneAndDelete',

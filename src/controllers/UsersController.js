@@ -1,7 +1,8 @@
 import * as ERRORS from '../utils/errors.js';
 import Profile from '../models/Profile.js';
-import User from "../models/User.js";
-import Contact from '../models/Contact.js';
+import User from '../models/User.js';
+import {getFile} from './FileController.js';
+import {ObjectId} from 'mongodb';
 
 export const getAllUsers = async (req, res) => {
     const users = await User.find().exec();
@@ -14,102 +15,100 @@ export const getAllUsers = async (req, res) => {
 };
 
 export const getProfile = async (req, res) => {
-    const profileId = req.params.id;
+    const profile = await Profile
+        .findById(req.params.id)
+        .populate('avatar')
+        .exec();
 
-    Profile.findById(profileId).populate('contacts')
-        .then((profile) => {
-            if (!profile) {
+    if (profile) {
+        res.json({
+            resultCode: 0,
+            data: profile
+        })
+    } else {
+        res.status(404).json({
+            resultCode: 1,
+            error: ERRORS.NOT_FOUND
+        })
+    }
+}
+
+
+export const updateProfile = async (req, res) => {
+    try {
+        await Profile.updateOne(
+            {_id: req.params.id},
+            {
+                firstName: req.body.firstName,
+                secondName: req.body.secondName,
+                lastName: req.body.lastName,
+                age: req.body.age,
+                city: req.body.city
+            }
+        ).exec();
+
+        res.json({
+            status: true
+        });
+
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({
+            error: ERRORS.UNDEFINED_ERROR
+        })
+    }
+}
+
+export const updateProfilePhoto = async (req, res) => {
+    try {
+        const profileId = req.params.id;
+        const file = req.file;
+
+        await Profile.findOneAndUpdate(
+            {_id: profileId},
+            {avatarId: file.id,}
+        ).populate('avatar')
+        .then(profile => {
+            if (profile) {
+                res.send({
+                    resultCode: 0,
+                    data: {
+                        id: file.id,
+                        name: file.filename,
+                        contentType: file.contentType,
+                        data: profile.avatar[0].data
+                    }
+                })
+                // if (file) {
+                //     getFile(file.id)
+                //         .then(fileRes => {
+                //             res.send({
+                //                 resultCode: 0,
+                //                 data: {
+                //                     id: file.id,
+                //                     name: file.filename,
+                //                     contentType: file.contentType,
+                //                     data: fileRes[0].data
+                //                 }
+                //             })
+                //         })
+                // } else {
+                //     res.send({
+                //         resultCode: 0
+                //     })
+                // }
+            } else {
                 res.status(404).json({
                     resultCode: 1,
                     error: ERRORS.NOT_FOUND
                 })
             }
-            res.json({
-                resultCode: 0,
-                data: profile
-            })
-        }).catch(err => {
+
+        });
+    } catch (err) {
         console.log(err);
-        res.status(400).json({
-            resultCode: 1,
+        res.status(500).json({
             error: ERRORS.UNDEFINED_ERROR
         })
-    });
+    }
 }
-
-//
-// export const updatePost = async (req, res) => {
-//     try {
-//         const postId = req.params.id;
-//
-//         const tags = req.body.tags ? req.body.tags.split(',') : [];
-//         tags.forEach(tag => tag.trim());
-//
-//         await Post.updateOne(
-//             {_id: postId},
-//             {
-//                 title: req.body.title,
-//                 text: req.body.text,
-//                 tags: tags,
-//                 imageUrl: req.body.imageUrl
-//             }
-//         ).exec();
-//
-//         res.json({
-//             status: true
-//         });
-//
-//     } catch (err) {
-//         console.log(err);
-//         res.status(500).json({
-//             error: ERRORS.UNDEFINED_ERROR
-//         })
-//     }
-// }
-//
-// export const deletePost = async (req, res) => {
-//     try {
-//         const postId = req.params.id;
-//
-//         Post.findOneAndDelete(
-//             {_id: postId},
-//         ).then((post) => {
-//             if (!post) {
-//                 res.status(404).json({
-//                     error: ERRORS.NOT_FOUND
-//                 })
-//             }
-//
-//             res.json({
-//                 status: true
-//             })
-//         }).catch(err => {
-//             console.log(err);
-//             res.status(400).json({
-//                 error: ERRORS.UNDEFINED_ERROR
-//             })
-//         });
-//
-//     } catch (err) {
-//         console.log(err);
-//         res.status(500).json({
-//             error: ERRORS.UNDEFINED_ERROR
-//         })
-//     }
-// }
-//
-// export const getLastTags = async (req, res) => {
-//     try {
-//         const posts = await Post.find().limit(5).exec();
-//
-//         const tags = posts.map(it => it.tags).flat().slice(0, 5);
-//
-//         res.json(tags);
-//     } catch (err) {
-//         console.log(err);
-//         res.status(500).json({
-//             error: ERRORS.UNDEFINED_ERROR
-//         })
-//     }
-//
-// };

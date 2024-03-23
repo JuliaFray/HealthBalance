@@ -3,7 +3,6 @@ import cors from 'cors';
 import createError from 'http-errors';
 import express from 'express';
 import path from 'path';
-import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import * as mongo from './src/configs/mongo.js'
 import globalErrorHandler from './src/utils/handleErrors.js'
@@ -20,10 +19,9 @@ const app = express();
 const mongoDb = mongo;
 
 app.use(logger('dev'));
-app.use(express.json());
 app.use(cors());
-app.use(express.urlencoded({extended: false}));
-app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
 
 // Routing
 app.use('/', indexRouter);
