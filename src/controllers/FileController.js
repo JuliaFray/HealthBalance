@@ -1,8 +1,19 @@
 import {MongoClient, ObjectId} from 'mongodb';
 import {UNDEFINED_ERROR} from '../utils/errors.js';
+import mongoose from "mongoose";
 
 const url = process.env.DB_URI_GET_FILES;
 const mongoClient = new MongoClient(url);
+
+const connect = mongoose.createConnection(url);
+
+let gridFS;
+
+connect.once('open', () => {
+    gridFS = new mongoose.mongo.GridFSBucket(connect.db, {
+        bucketName: "photos.files"
+    });
+});
 
 export const uploadFile = (req, res) => {
     const file = req.file
@@ -43,6 +54,10 @@ export const getFile = async (imageId) => {
     return images;
 }
 
-export const removeFile = async (imageId) => {
-    // todo remove file
+export const removeFile = async (fileId) => {
+    await mongoClient.connect()
+
+    await mongoClient.db('dmj')
+        .collection('photos.chunks')
+        .deleteOne({'files_id': new ObjectId(fileId)});
 }

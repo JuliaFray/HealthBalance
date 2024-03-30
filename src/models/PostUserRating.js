@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const PostUserSchema = new mongoose.Schema({
+const PostUserRatingSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',
@@ -11,8 +11,12 @@ const PostUserSchema = new mongoose.Schema({
         ref: 'Post',
         required: true
     },
+    rating: {
+        type: Number,
+        default: 0
+    }
 }, {
     timestamps: true
 });
 
-export default mongoose.model('PostUser', PostUserSchema);
+export default mongoose.model('PostUserRating', PostUserRatingSchema);

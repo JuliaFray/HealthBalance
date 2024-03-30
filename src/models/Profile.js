@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import File from "./File.js";
+import Contact from "./Contact.js";
 
 const ProfileSchema = new mongoose.Schema({
     firstName: {
@@ -21,9 +22,10 @@ const ProfileSchema = new mongoose.Schema({
     city: String,
     contacts: {
         type: mongoose.Schema.ObjectId,
-        ref: 'Contact',
+        ref: Contact,
         required: false
     },
+    description: String
 }, {
     timestamps: true,
     toJSON: {virtuals: true},
@@ -33,7 +35,8 @@ const ProfileSchema = new mongoose.Schema({
 ProfileSchema.virtual('avatar', {
     ref: File.Chunk,
     localField: 'avatarId',
-    foreignField: 'files_id'
+    foreignField: 'files_id',
+    justOne: true
 })
 
 export default mongoose.model('Profile', ProfileSchema);

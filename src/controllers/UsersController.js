@@ -1,11 +1,10 @@
 import * as ERRORS from '../utils/errors.js';
 import Profile from '../models/Profile.js';
-import User from '../models/User.js';
-import {getFile} from './FileController.js';
-import {ObjectId} from 'mongodb';
 
 export const getAllUsers = async (req, res) => {
-    const users = await User.find().exec();
+    const users = await Profile.find({_id: {$not: {$in: req.userId}}})
+        .populate('avatar')
+        .exec();
 
     res.json({
         resultCode: 0,
@@ -18,7 +17,12 @@ export const getProfile = async (req, res) => {
     const profile = await Profile
         .findById(req.params.id)
         .populate('avatar')
+        .populate({
+            path: 'contacts',
+            select: ['-_id']
+        })
         .exec();
+
 
     if (profile) {
         res.json({
@@ -43,7 +47,8 @@ export const updateProfile = async (req, res) => {
                 secondName: req.body.secondName,
                 lastName: req.body.lastName,
                 age: req.body.age,
-                city: req.body.city
+                city: req.body.city,
+                description: req.body.description
             }
         ).exec();
 
@@ -66,45 +71,27 @@ export const updateProfilePhoto = async (req, res) => {
 
         await Profile.findOneAndUpdate(
             {_id: profileId},
-            {avatarId: file.id,}
+            {avatarId: file.id}
         ).populate('avatar')
-        .then(profile => {
-            if (profile) {
-                res.send({
-                    resultCode: 0,
-                    data: {
-                        id: file.id,
-                        name: file.filename,
-                        contentType: file.contentType,
-                        data: profile.avatar[0].data
-                    }
-                })
-                // if (file) {
-                //     getFile(file.id)
-                //         .then(fileRes => {
-                //             res.send({
-                //                 resultCode: 0,
-                //                 data: {
-                //                     id: file.id,
-                //                     name: file.filename,
-                //                     contentType: file.contentType,
-                //                     data: fileRes[0].data
-                //                 }
-                //             })
-                //         })
-                // } else {
-                //     res.send({
-                //         resultCode: 0
-                //     })
-                // }
-            } else {
-                res.status(404).json({
-                    resultCode: 1,
-                    error: ERRORS.NOT_FOUND
-                })
-            }
+            .then(profile => {
+                if (profile) {
+                    res.send({
+                        resultCode: 0,
+                        data: {
+                            id: file.id,
+                            name: file.filename,
+                            contentType: file.contentType,
+                            data: profile.avatar[0].data
+                        }
+                    })
+                } else {
+                    res.status(404).json({
+                        resultCode: 1,
+                        error: ERRORS.NOT_FOUND
+                    })
+                }
 
-        });
+            });
     } catch (err) {
         console.log(err);
         res.status(500).json({

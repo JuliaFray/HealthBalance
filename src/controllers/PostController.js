@@ -1,9 +1,13 @@
 import Post from '../models/Post.js';
 import * as ERRORS from '../utils/errors.js';
-import PostUser from '../models/PostUser.js';
+import PostUserFavorite from '../models/PostUserFavorite.js';
 import Comment from '../models/Comment.js';
+import {removeFile} from "./FileController.js";
+import PostUserRating from "../models/PostUserRating.js";
 
 export const createPost = async (req, res) => {
+    const file = req.file;
+
     const tags = req.body.tags instanceof Array
         ? req.body.tags
         : req.body.tags.split(',');
@@ -13,7 +17,7 @@ export const createPost = async (req, res) => {
         title: req.body.title,
         text: req.body.text,
         tags: tags,
-        imageId: req.body.imageId,
+        imageId: file?.id,
         author: req.userId
     });
 
@@ -23,27 +27,25 @@ export const createPost = async (req, res) => {
         resultCode: 0,
         data: post
     });
-};
-
+}
 
 export const getAll = async (req, res) => {
     const tags = req.query['tags'];
+    const userId = req.query['userId'];
+    const isFavorite = req.query['isFavorite'];
 
-    const popular = await Post.findOne()
-        .sort('-viewsCount');
+    const popular = await Post.findOne().sort('-viewsCount');
 
-    let where = {};
+    let where;
 
     if (tags) {
         where = {tags: {$in: tags}}
     } else {
-        where = {
-            _id: {
-                $not: {
-                    $in: popular._id
-                }
-            }
-        }
+        where = {_id: {$not: {$in: popular._id}}}
+    }
+
+    if (userId) {
+        where = {author: {$in: userId}}
     }
 
     const posts = await Post.find(where)
@@ -52,31 +54,36 @@ export const getAll = async (req, res) => {
             path: 'likes',
             match: {'user': {$in: req.userId}}
         })
+        .populate('rating')
         .populate({
-                path: 'author',
-                populate: {
-                    path: 'avatar'
-                },
-                select: (['-__v', '-age', '-city', '-status', '-contacts'])
-            }
-        )
+            path: 'userRating',
+            match: {'user': {$in: req.userId}}
+        })
+        .populate({
+            path: 'author',
+            populate: {
+                path: 'avatar'
+            },
+            select: (['-__v', '-age', '-city', '-status', '-contacts'])
+        })
+        .populate('comments')
         .exec();
 
     res.json({
         resultCode: 0,
         data: posts
     });
-};
+}
 
 export const setLike = async (req, res) => {
-    await PostUser.findOneAndDelete({post: req.params.id, user: req.userId})
+    await PostUserFavorite.findOneAndDelete({post: req.params.id, user: req.userId})
         .then(async (rec) => {
             if (rec) {
                 res.json({
                     resultCode: 0
                 })
             } else {
-                const doc = new PostUser({
+                const doc = new PostUserFavorite({
                     post: req.params.id,
                     user: req.userId
                 });
@@ -102,6 +109,30 @@ export const setLike = async (req, res) => {
                 message: ERRORS.UNDEFINED_ERROR
             })
         });
+}
+
+export const setRating = async (req, res) => {
+    const rating = req.query['rating'];
+    const postId = req.params.id;
+
+    await Post.findOneAndUpdate(
+        {_id: postId},
+        {$inc: {rating: rating}},
+        {upsert: true}
+    ).exec();
+
+    await PostUserRating.findOneAndUpdate({
+            post: req.params.id,
+            user: req.userId
+        },
+        {$set: {rating: rating}},
+        {upsert: true}
+    ).exec()
+
+
+    res.json({
+        resultCode: 0
+    });
 }
 
 export const getPopularPost = async (req, res) => {
@@ -149,6 +180,12 @@ export const getPost = async (req, res) => {
             }
         })
         .populate('image')
+        .populate('likes')
+        .populate('rating')
+        .populate({
+            path: 'userRating',
+            match: {'user': {$in: req.userId}}
+        })
         .then((post) => {
             if (!post) {
                 res.status(404).json({
@@ -166,9 +203,9 @@ export const getPost = async (req, res) => {
     });
 }
 
-
 export const updatePost = async (req, res) => {
     const postId = req.params.id;
+    const file = req.file;
 
     const tags = req.body.tags ? req.body.tags.split(',') : [];
     tags.forEach(tag => tag.trim());
@@ -179,7 +216,7 @@ export const updatePost = async (req, res) => {
             title: req.body.title,
             text: req.body.text,
             tags: tags,
-            imageId: req.body.imageId
+            imageId: file?.id
         }
     ).exec();
 
@@ -194,16 +231,16 @@ export const deletePost = async (req, res) => {
     Post.findOneAndDelete(
         {_id: postId},
     ).then((post) => {
-        if (!post) {
+        if (post) {
+            res.json({
+                resultCode: 0
+            })
+        } else {
             res.status(404).json({
                 resultCode: 1,
                 message: ERRORS.NOT_FOUND
             })
         }
-
-        res.json({
-            resultCode: 0
-        })
     }).catch(err => {
         console.log(err);
         res.status(400).json({
@@ -239,4 +276,17 @@ export const createComment = async (req, res) => {
         resultCode: 0,
         data: comment
     });
+}
+
+export const deletePostImage = async (req, res, next) => {
+    const postId = req.params.id;
+    const file = req.file;
+
+    const post = await Post.findOne({_id: postId})
+        .populate('image').exec();
+
+    if (!!post?.imageId && (!file || post.imageId !== file.id)) {
+        await removeFile(post.imageId)
+    }
+    next();
 }

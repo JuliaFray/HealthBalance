@@ -1,8 +1,20 @@
 import express from 'express';
-import {postCreateValidation} from "../utils/validation.js";
-import handleErrors from "../utils/handleErrors.js";
-import checkAuth from "../utils/checkAuth.js";
-import {getAll, setLike, getPopularPost, getPost, createPost, updatePost, deletePost, createComment} from "../controllers/PostController.js";
+import {postCreateValidation} from '../utils/validation.js';
+import handleErrors from '../utils/handleErrors.js';
+import checkAuth from '../utils/checkAuth.js';
+import {
+    createComment,
+    createPost,
+    deletePost,
+    deletePostImage,
+    getAll,
+    getPopularPost,
+    getPost,
+    setLike,
+    setRating,
+    updatePost
+} from '../controllers/PostController.js';
+import upload from '../utils/gridFsStorage.js';
 
 const router = express.Router();
 
@@ -10,11 +22,12 @@ router.use(checkAuth);
 
 router.get('/', getAll);
 router.put('/:id/like', setLike);
+router.put('/:id/rating', setRating);
 router.get('/popular', getPopularPost);
 router.get('/:id', getPost);
-router.post('/', postCreateValidation, handleErrors, createPost);
-router.put('/:id', postCreateValidation, handleErrors, updatePost);
-router.delete('/:id', deletePost);
+router.post('/', postCreateValidation, upload.single('image'), handleErrors, createPost);
+router.put('/:id', postCreateValidation, deletePostImage, upload.single('image'), handleErrors, updatePost);
+router.delete('/:id', deletePostImage, deletePost);
 
 router.post('/:id/comment', createComment)
 

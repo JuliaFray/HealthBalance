@@ -50,7 +50,7 @@ export const login = async (req, res) => {
     if (!user) {
         return res.status(404).json({
             resultCode: 1,
-            message: ERRORS.NOT_FOUND
+            message: ERRORS.NOT_FOUND_USER
         })
     }
 
