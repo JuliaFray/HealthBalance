@@ -4,6 +4,7 @@ import Comment from "./Comment.js";
 import File from './File.js'
 import Profile from "./Profile.js";
 import PostUserRating from "./PostUserRating.js";
+import Tag from "./Tag.js";
 
 const PostSchema = new mongoose.Schema({
     title: {
@@ -15,7 +16,8 @@ const PostSchema = new mongoose.Schema({
         required: true
     },
     tags: {
-        type: Array,
+        type: [mongoose.Schema.ObjectId],
+        ref: Tag,
         default: []
     },
     imageId: {
@@ -75,16 +77,13 @@ PostSchema.pre('findOneAndDelete',
     {document: true, errorHandler: true},
     async (error, post, next
     ) => {
-        await PostUserFavorite.deleteMany({post: post._id})
-            .then(() => {
-                console.log('likes were deleted');
-                Comment.deleteMany({post: post._id})
-                    .then(() => {
-                        console.log('Comment were deleted');
-                        next();
-                    })
-            })
-            .catch(err => next(new Error(err)));
+        try {
+            await PostUserFavorite.deleteMany({post: post._id}).exec();
+            await PostUserRating.deleteMany({post: post._id}).exec();
+            await Comment.deleteMany({post: post._id}).exec();
+        } catch (e) {
+            next(new Error(e));
+        }
     });
 
 export default mongoose.model('Post', PostSchema);

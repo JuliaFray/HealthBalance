@@ -2,32 +2,9 @@ import Post from '../models/Post.js';
 import * as ERRORS from '../utils/errors.js';
 import PostUserFavorite from '../models/PostUserFavorite.js';
 import Comment from '../models/Comment.js';
-import {removeFile} from "./FileController.js";
-import PostUserRating from "../models/PostUserRating.js";
-
-export const createPost = async (req, res) => {
-    const file = req.file;
-
-    const tags = req.body.tags instanceof Array
-        ? req.body.tags
-        : req.body.tags.split(',');
-
-    tags.forEach(tag => tag.trim());
-    const doc = new Post({
-        title: req.body.title,
-        text: req.body.text,
-        tags: tags,
-        imageId: file?.id,
-        author: req.userId
-    });
-
-    const post = await doc.save();
-
-    res.json({
-        resultCode: 0,
-        data: post
-    });
-}
+import {removeFile} from './FileController.js';
+import PostUserRating from '../models/PostUserRating.js';
+import Tag from '../models/Tag.js';
 
 export const getAll = async (req, res) => {
     const tags = req.query['tags'];
@@ -48,16 +25,18 @@ export const getAll = async (req, res) => {
         where = {author: {$in: userId}}
     }
 
+    if (isFavorite) {
+        // todo
+    }
     const posts = await Post.find(where)
         .select(['-__v', '-updatedAt', '-author.__v'])
-        .populate({
-            path: 'likes',
-            match: {'user': {$in: req.userId}}
-        })
+        .populate('comments')
+        .populate('likes')
         .populate('rating')
+        .populate('userRating')
         .populate({
-            path: 'userRating',
-            match: {'user': {$in: req.userId}}
+            path: 'tags',
+            select: ['_id', 'value']
         })
         .populate({
             path: 'author',
@@ -66,7 +45,6 @@ export const getAll = async (req, res) => {
             },
             select: (['-__v', '-age', '-city', '-status', '-contacts'])
         })
-        .populate('comments')
         .exec();
 
     res.json({
@@ -183,6 +161,10 @@ export const getPost = async (req, res) => {
         .populate('likes')
         .populate('rating')
         .populate({
+            path: 'tags',
+            select: ['_id', 'value']
+        })
+        .populate({
             path: 'userRating',
             match: {'user': {$in: req.userId}}
         })
@@ -203,20 +185,60 @@ export const getPost = async (req, res) => {
     });
 }
 
+export const createPost = async (req, res) => {
+    const file = req.file;
+
+    const doc = new Post({
+        title: req.body.title,
+        text: req.body.text,
+        imageId: file?.id,
+        author: req.userId
+    });
+
+    const post = await doc.save();
+
+    const tags = req.body.tags instanceof Array
+        ? req.body.tags : [];
+
+    (await tags).forEach(tag => {
+        const doc = new Tag({
+            post: post._id,
+            value: tag.trim()
+        });
+
+        doc.save();
+    })
+
+    res.json({
+        resultCode: 0
+    });
+}
+
 export const updatePost = async (req, res) => {
     const postId = req.params.id;
     const file = req.file;
 
-    const tags = req.body.tags ? req.body.tags.split(',') : [];
-    tags.forEach(tag => tag.trim());
+    const tags = JSON.parse(req.body.tags) instanceof Array
+        ? JSON.parse(req.body.tags) : [];
+    const tagIds = [];
+
+    for (const tag of tags) {
+        const dbo = await Tag.findOneAndUpdate(
+            {_id: tag._id},
+            {value: tag.value.trim()},
+            {upsert: true, returnDocument: 'after'},
+        ).exec();
+
+        tagIds.push(dbo._doc._id);
+    }
 
     await Post.updateOne(
         {_id: postId},
         {
             title: req.body.title,
             text: req.body.text,
-            tags: tags,
-            imageId: file?.id
+            imageId: file?.id,
+            tags: tagIds
         }
     ).exec();
 
@@ -250,10 +272,25 @@ export const deletePost = async (req, res) => {
     });
 }
 
-export const getLastTags = async (req, res) => {
-    const posts = await Post.find().limit(5).exec();
+export const getAllTags = async (req, res) => {
+    const tags = await Tag
+        .find()
+        .sort('-value')
+        .select(['_id', 'value'])
+        .exec();
 
-    const tags = posts.map(it => it.tags).flat().slice(0, 5);
+    res.json({
+        resultCode: 0,
+        data: tags
+    })
+};
+
+export const getLastTags = async (req, res) => {
+    const tags = await Tag
+        .find()
+        .sort('-useCount')
+        .limit(5)
+        .exec();
 
     res.json({
         resultCode: 0,
