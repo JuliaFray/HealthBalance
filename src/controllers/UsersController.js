@@ -1,6 +1,7 @@
 import * as ERRORS from '../utils/errors.js';
 import Profile from '../models/Profile.js';
-import {removeFile} from "./FileController.js";
+import {removeFile} from './FileController.js';
+import Post from '../models/Post.js';
 
 export const getAllUsers = async (req, res) => {
     const users = await Profile.find({_id: {$not: {$in: req.userId}}})
@@ -38,6 +39,26 @@ export const getProfile = async (req, res) => {
     }
 }
 
+export const getProfileStats = async (req, res) => {
+    let posts = await Post
+        .find({author: {$in: req.params.id}})
+        .populate('rating')
+        .exec();
+
+    let favorites = await Post
+        .find()
+        .exec();
+
+    res.json({
+        resultCode: 0,
+        data: {
+            posts: posts.length,
+            favorites: favorites.filter(it => !!it.likes).length,
+            friends: 0,
+            rating: posts.reduce((sum, el) => sum + el.rating, 0) || 0
+        }
+    })
+}
 
 export const updateProfile = async (req, res) => {
     const userId = req.params.id;

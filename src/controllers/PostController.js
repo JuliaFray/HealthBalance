@@ -9,31 +9,47 @@ import Tag from '../models/Tag.js';
 export const getAll = async (req, res) => {
     const tags = req.query['tags'];
     const userId = req.query['userId'];
-    const isFavorite = req.query['isFavorite'];
+    const isFavoriteStr = req.query['isFavorite'];
+    const isBest = req.query['isBest'];
+    const filter = req.query['filter'];
+    const isFavorite = isFavoriteStr && JSON.parse(isFavoriteStr);
 
     const popular = await Post.findOne().sort('-viewsCount');
 
     let where;
 
-    if (tags) {
-        where = {tags: {$in: tags}}
-    } else {
-        where = {_id: {$not: {$in: popular._id}}}
-    }
-
-    if (userId) {
+    if (userId && !isFavorite) {
         where = {author: {$in: userId}}
+    } else {
+        if (tags) {
+            where = {tags: {$in: tags}}
+        } else {
+            where = {_id: {$not: {$in: popular._id}}}
+        }
     }
 
-    if (isFavorite) {
-        // todo
+    if (filter) {
+        where = {
+            ...where,
+            $or: [
+                {title: {$regex: filter, $options: 'i'}},
+                {text: {$regex: filter, $options: 'i'}}
+            ]
+        }
     }
-    const posts = await Post.find(where)
+
+    let posts = await Post.find(where)
         .select(['-__v', '-updatedAt', '-author.__v'])
         .populate('comments')
-        .populate('likes')
+        .populate({
+            path: 'likes',
+            match: {'user': {$in: req.userId}}
+        })
         .populate('rating')
-        .populate('userRating')
+        .populate({
+            path: 'userRating',
+            match: {'user': {$in: req.userId}}
+        })
         .populate({
             path: 'tags',
             select: ['_id', 'value']
@@ -45,7 +61,24 @@ export const getAll = async (req, res) => {
             },
             select: (['-__v', '-age', '-city', '-status', '-contacts'])
         })
+        .limit(10)
         .exec();
+
+    if (isBest) {
+        if (JSON.parse(isBest)) {
+            posts.sort((a, b) => {
+                return b.rating - a.rating
+            })
+        } else {
+            posts.sort((a, b) => {
+                return b.createdAt - a.createdAt
+            })
+        }
+    }
+
+    if (isFavoriteStr && JSON.parse(isFavoriteStr)) {
+        posts = posts.filter(it => !!it.likes)
+    }
 
     res.json({
         resultCode: 0,
@@ -53,7 +86,7 @@ export const getAll = async (req, res) => {
     });
 }
 
-export const setLike = async (req, res) => {
+export const setFavorites = async (req, res) => {
     await PostUserFavorite.findOneAndDelete({post: req.params.id, user: req.userId})
         .then(async (rec) => {
             if (rec) {
@@ -89,24 +122,17 @@ export const setLike = async (req, res) => {
         });
 }
 
-export const setRating = async (req, res) => {
+export const toggleRating = async (req, res) => {
     const rating = req.query['rating'];
     const postId = req.params.id;
 
-    await Post.findOneAndUpdate(
-        {_id: postId},
-        {$inc: {rating: rating}},
-        {upsert: true}
-    ).exec();
-
     await PostUserRating.findOneAndUpdate({
-            post: req.params.id,
+            post: postId,
             user: req.userId
         },
         {$set: {rating: rating}},
         {upsert: true}
     ).exec()
-
 
     res.json({
         resultCode: 0
@@ -220,16 +246,34 @@ export const updatePost = async (req, res) => {
 
     const tags = JSON.parse(req.body.tags) instanceof Array
         ? JSON.parse(req.body.tags) : [];
-    const tagIds = [];
+    const tagIds = tags.map(t => t._id);
 
-    for (const tag of tags) {
-        const dbo = await Tag.findOneAndUpdate(
+    const post = await Post.findById(postId)
+        .populate({
+            path: 'tags',
+            select: ['_id', 'value']
+        })
+        .exec();
+
+    const mergedTags = mergeTags(post._doc.tags, tags);
+
+
+    for (const tag of mergedTags.allIds) {
+        let update;
+
+        if (mergedTags.forUpdate.includes(tag)) {
+            update = {value: tag.value.trim()}
+        } else if (mergedTags.forCreate.includes(tag)) {
+            update = {value: tag.value.trim(), $inc: {useCount: 1}};
+        } else {
+            update = {value: tag.value.trim(), $inc: {useCount: -1}};
+        }
+
+        await Tag.findOneAndUpdate(
             {_id: tag._id},
-            {value: tag.value.trim()},
-            {upsert: true, returnDocument: 'after'},
+            update,
+            {upsert: true},
         ).exec();
-
-        tagIds.push(dbo._doc._id);
     }
 
     await Post.updateOne(
@@ -285,7 +329,7 @@ export const getAllTags = async (req, res) => {
     })
 };
 
-export const getLastTags = async (req, res) => {
+export const getPopularTags = async (req, res) => {
     const tags = await Tag
         .find()
         .sort('-useCount')
@@ -326,4 +370,17 @@ export const deletePostImage = async (req, res, next) => {
         await removeFile(post.imageId)
     }
     next();
+}
+
+const mergeTags = (oldTags, newTags) => {
+    const forDelete = oldTags.filter(o => !newTags.includes(o));
+    const forUpdate = oldTags.filter(o => newTags.includes(o));
+    const forCreate = newTags.filter(n => !oldTags.includes(n));
+    const allIds = [...oldTags, ...newTags];
+    return {
+        forDelete,
+        forUpdate,
+        forCreate,
+        allIds
+    }
 }

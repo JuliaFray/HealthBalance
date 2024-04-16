@@ -10,8 +10,8 @@ import {
     getAll,
     getPopularPost,
     getPost,
-    setLike,
-    setRating,
+    setFavorites,
+    toggleRating,
     updatePost
 } from '../controllers/PostController.js';
 import upload from '../utils/gridFsStorage.js';
@@ -21,8 +21,8 @@ const router = express.Router();
 router.use(checkAuth);
 
 router.get('/', getAll);
-router.put('/:id/like', setLike);
-router.put('/:id/rating', setRating);
+router.put('/:id/like', setFavorites);
+router.put('/:id/rating', toggleRating);
 router.get('/popular', getPopularPost);
 router.get('/:id', getPost);
 router.post('/', postCreateValidation, upload.single('image'), handleErrors, createPost);

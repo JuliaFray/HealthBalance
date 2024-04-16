@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 
 const ContactSchema = new mongoose.Schema({
-    github: String,
-    website: String,
+    GitHub: String,
+    Website: String,
     phone: String
 }, {
     timestamps: true
