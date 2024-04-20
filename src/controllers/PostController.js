@@ -214,29 +214,43 @@ export const getPost = async (req, res) => {
 export const createPost = async (req, res) => {
     const file = req.file;
 
+    const tags = JSON.parse(req.body.tags) instanceof Array
+        ? JSON.parse(req.body.tags) : [];
+    const tagIds = tags.map(t => t._id);
+
+    const mergedTags = mergeTags([], tags);
+
+    for (const tag of mergedTags.allIds) {
+        let update;
+
+        if (mergedTags.forUpdate.includes(tag)) {
+            update = {value: tag.value.trim()}
+        } else if (mergedTags.forCreate.includes(tag)) {
+            update = {value: tag.value.trim(), $inc: {useCount: 1}};
+        } else {
+            update = {value: tag.value.trim(), $inc: {useCount: -1}};
+        }
+
+        await Tag.findOneAndUpdate(
+            {_id: tag._id},
+            update,
+            {upsert: true},
+        ).exec();
+    }
+
     const doc = new Post({
         title: req.body.title,
         text: req.body.text,
         imageId: file?.id,
-        author: req.userId
+        author: req.userId,
+        tags: tagIds
     });
 
-    const post = await doc.save();
-
-    const tags = req.body.tags instanceof Array
-        ? req.body.tags : [];
-
-    (await tags).forEach(tag => {
-        const doc = new Tag({
-            post: post._id,
-            value: tag.trim()
-        });
-
-        doc.save();
-    })
+    const newPost = await doc.save();
 
     res.json({
-        resultCode: 0
+        resultCode: 0,
+        data: newPost
     });
 }
 

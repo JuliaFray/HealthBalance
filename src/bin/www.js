@@ -1,12 +1,7 @@
-#!/usr/bin/env node
-
-/**
- * Module dependencies.
- */
-
 import app from '../../app.js';
 import debug from 'debug';
 import http from 'http';
+import * as ws from './../configs/ws.js'
 
 /**
  * Get port from environment and store in Express.
@@ -49,6 +44,14 @@ function normalizePort(val) {
 }
 
 /**
+ * ws
+ */
+const wsServer = ws.server;
+wsServer.listen(process.env.WS_PORT);
+wsServer.on('listening', () => {console.log('WS OK')})
+
+
+/**
  * Event listener for HTTP server "error" event.
  */
 
@@ -86,6 +89,6 @@ function onListening() {
     const bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
-    console.log('Listening on ' + bind);
+    console.log('Server OK');
     debug('Listening on ' + bind);
 }

@@ -40,20 +40,23 @@ export const getProfile = async (req, res) => {
 }
 
 export const getProfileStats = async (req, res) => {
+    let favorites = await Post.find()
+        .populate({
+            path: 'likes',
+            match: {'user': {$in: req.params.id}}
+        })
+        .exec();
+
     let posts = await Post
         .find({author: {$in: req.params.id}})
         .populate('rating')
-        .exec();
-
-    let favorites = await Post
-        .find()
         .exec();
 
     res.json({
         resultCode: 0,
         data: {
             posts: posts.length,
-            favorites: favorites.filter(it => !!it.likes).length,
+            favorites: favorites.filter(it => it.likes).length,
             friends: 0,
             rating: posts.reduce((sum, el) => sum + el.rating, 0) || 0
         }
