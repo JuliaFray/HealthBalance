@@ -1,9 +1,9 @@
 import {WebSocketServer} from 'ws';
-import http from 'http';
+import https from 'https';
 import {v4} from 'uuid';
 
 
-export const server = http.createServer();
+export const server = https.createServer();
 const wsServer = new WebSocketServer({server});
 
 const Events = {
