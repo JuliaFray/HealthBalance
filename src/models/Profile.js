@@ -25,6 +25,16 @@ const ProfileSchema = new mongoose.Schema({
         ref: Contact,
         required: false
     },
+    friends: {
+        type: [mongoose.Schema.ObjectId],
+        ref: 'Profile',
+        default: []
+    },
+    followers: {
+        type: [mongoose.Schema.ObjectId],
+        ref: 'Profile',
+        default: []
+    },
     description: String
 }, {
     timestamps: true,

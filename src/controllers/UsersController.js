@@ -1,17 +1,29 @@
 import * as ERRORS from '../utils/errors.js';
 import Profile from '../models/Profile.js';
+import Comment from '../models/Comment.js';
+import PostUserRating from '../models/PostUserRating.js';
 import {removeFile} from './FileController.js';
 import Post from '../models/Post.js';
 
 export const getAllUsers = async (req, res) => {
-    const users = await Profile.find({_id: {$not: {$in: req.userId}}})
+    const profile = await Profile.findOne({_id: {$in: req.userId}})
+        .populate('followers')
+        .exec();
+
+
+    let users = await Profile.find({_id: {$not: {$in: req.userId}}})
         .populate('avatar')
         .exec();
 
+    const data = users.map(u => {
+        u.isFollowed = profile.followers.map(f => f._id).includes(u._id);
+        return u;
+    });
+
     res.json({
         resultCode: 0,
-        data: users,
-        totalCount: users.length
+        data: data,
+        totalCount: data.length
     });
 };
 
@@ -52,13 +64,23 @@ export const getProfileStats = async (req, res) => {
         .populate('rating')
         .exec();
 
+    let comments = await Comment
+        .find({author: {$in: req.params.id}})
+        .exec();
+
+    let marks = await PostUserRating
+        .find({user: {$in: req.params.id}})
+        .exec();
+
     res.json({
         resultCode: 0,
         data: {
             posts: posts.length,
             favorites: favorites.filter(it => it.likes).length,
             friends: 0,
-            rating: posts.reduce((sum, el) => sum + el.rating, 0) || 0
+            rating: posts.reduce((sum, el) => sum + el.rating, 0) || 0,
+            marks: marks.filter(it => it.rating).length || 0,
+            comments: comments.length || 0
         }
     })
 }
@@ -93,41 +115,35 @@ export const updateProfile = async (req, res) => {
     });
 }
 
-// export const updateProfilePhoto = async (req, res) => {
-//     try {
-//         const profileId = req.params.id;
-//         const file = req.file;
-//
-//         await Profile.findOneAndUpdate(
-//             {_id: profileId},
-//             {avatarId: file.id}
-//         ).populate('avatar')
-//             .then(profile => {
-//                 if (profile) {
-//                     res.send({
-//                         resultCode: 0,
-//                         data: {
-//                             id: file.id,
-//                             name: file.filename,
-//                             contentType: file.contentType,
-//                             data: profile.avatar[0].data
-//                         }
-//                     })
-//                 } else {
-//                     res.status(404).json({
-//                         resultCode: 1,
-//                         error: ERRORS.NOT_FOUND
-//                     })
-//                 }
-//
-//             });
-//     } catch (err) {
-//         console.log(err);
-//         res.status(500).json({
-//             error: ERRORS.UNDEFINED_ERROR
-//         })
-//     }
-// }
+export const follow = async (req, res) => {
+    const userId = req.params.id;
+    const friendId = req.query['friendId'];
+
+    await Profile.findOneAndUpdate(
+        {_id: userId},
+        {$push: {followers: [friendId]}},
+    ).exec();
+
+    res.json({
+        resultCode: 0,
+    });
+
+}
+
+export const unfollow = async (req, res) => {
+    const userId = req.params.id;
+    const friendId = req.query['friendId'];
+
+    await Profile.findOneAndUpdate(
+        {_id: userId},
+        {$push: {friends: [friendId]}},
+    ).exec();
+
+    res.json({
+        resultCode: 0,
+    });
+
+}
 
 export const deleteUserImage = async (req, res, next) => {
     const userId = req.params.id;
