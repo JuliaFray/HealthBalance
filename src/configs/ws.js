@@ -2,9 +2,12 @@ import {WebSocketServer} from 'ws';
 import https from 'https';
 import {v4} from 'uuid';
 import fs from 'fs';
+import path from "path";
+
+const __dirname = path.resolve(path.dirname(''));
 
 export const server = https.createServer({
-    cert: fs.readFileSync('./cert.pem')
+    cert: fs.readFileSync(path.join(__dirname, 'src/configs/cert.pem'))
 });
 const wsServer = new WebSocketServer({server});
 
