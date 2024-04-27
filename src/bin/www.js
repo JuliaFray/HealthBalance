@@ -1,27 +1,5 @@
-import app from '../../app.js';
 import debug from 'debug';
-import http from 'http';
 import * as ws from './../configs/ws.js'
-
-/**
- * Get port from environment and store in Express.
- */
-const port = normalizePort(process.env.PORT || 8000);
-app.set('port', port);
-
-/**
- * Create HTTP server.
- */
-
-const server = http.createServer(app);
-
-/**
- * Listen on provided port, on all network interfaces.
- */
-
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
 
 /**
  * Normalize a port into a number, string, or false.
@@ -47,9 +25,11 @@ function normalizePort(val) {
  * ws
  */
 const wsServer = ws.server;
-wsServer.listen(process.env.WS_PORT);
-wsServer.on('listening', () => {console.log('WS OK')})
-
+wsServer.listen(normalizePort(process.env.PORT || 8000));
+wsServer.on('listening', () => {
+    console.log('Server and WS OK')
+})
+wsServer.on('error', onError);
 
 /**
  * Event listener for HTTP server "error" event.

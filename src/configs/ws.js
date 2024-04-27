@@ -1,21 +1,18 @@
 import {WebSocketServer} from 'ws';
-import https from 'https';
+import http from 'http';
 import {v4} from 'uuid';
-import fs from 'fs';
-import path from "path";
-
-const __dirname = path.resolve(path.dirname(''));
-
-export const server = https.createServer({
-    cert: fs.readFileSync(path.join(__dirname, 'src/configs/cert.pem'))
-});
-const wsServer = new WebSocketServer({server});
+import app from './../../app.js';
 
 const Events = {
     USER_EVENT: 'USER_EVENT',
     LOGOUT_EVENT: 'LOGOUT_EVENT',
     AUTH_EVENT: 'AUTH_EVENT'
 };
+
+export const server = http.createServer();
+const wsServer = new WebSocketServer({server, perMessageDeflate: false});
+
+server.on('request', app)
 
 const clients = {};
 let userActivity = [];
