@@ -1,12 +1,13 @@
 import {WebSocketServer} from 'ws';
 import http from 'http';
-import {v4} from 'uuid';
 import app from './../../app.js';
 
-const Events = {
+
+export const Events = {
     USER_EVENT: 'USER_EVENT',
     LOGOUT_EVENT: 'LOGOUT_EVENT',
-    AUTH_EVENT: 'AUTH_EVENT'
+    AUTH_EVENT: 'AUTH_EVENT',
+    FOLLOW_EVENT: 'FOLLOW_EVENT'
 };
 
 export const server = http.createServer();
@@ -18,12 +19,17 @@ const clients = {};
 let userActivity = [];
 
 // Handle new client connections
-wsServer.on('connection', function handleNewConnection(connection) {
-    const userId = v4();
-    clients[userId] = connection;
+wsServer.on('connection', (connection, req) => {
+    const regex = new RegExp('[0-9a-f]{24}');
+    const res = regex.exec(req.url);
 
-    connection.on('message', (message) => processReceivedMessage(message));
-    connection.on('close', (message) => handleClientDisconnection(message, userId));
+    const userId = res ? res[0] : null;
+    if (userId) {
+        clients[userId] = connection;
+        connection.on('message', (message) => processReceivedMessage(message));
+        connection.on('close', (message) => handleClientDisconnection(message, userId));
+    }
+
 });
 
 // Handle incoming messages from clients
@@ -60,7 +66,6 @@ function handleClientDisconnection(message, userId) {
     const dataFromClient = JSON.parse(message.toString());
     const json = {type: Events.LOGOUT_EVENT};
     userActivity = userActivity.filter(it => it !== dataFromClient.id);
-    console.log('Events.LOGOUT_EVENT' + userActivity)
     json.data = userActivity;
 
     delete clients[userId];
@@ -72,4 +77,10 @@ function sendMessageToAllClients(msg) {
     wsServer.clients.forEach(function (client) {
         client.send(JSON.stringify(msg));
     });
+}
+
+export function sendMsg(msg, clientId, type) {
+    if (clients[clientId]) {
+        clients[clientId].send(JSON.stringify({type: type, data: msg}));
+    }
 }

@@ -4,6 +4,7 @@ import Comment from '../models/Comment.js';
 import PostUserRating from '../models/PostUserRating.js';
 import {removeFile} from './FileController.js';
 import Post from '../models/Post.js';
+import {Events, sendMsg} from "../configs/ws.js";
 
 export const getAllUsers = async (req, res) => {
     const profile = await Profile.findOne({_id: {$in: req.userId}})
@@ -15,9 +16,11 @@ export const getAllUsers = async (req, res) => {
         .populate('avatar')
         .exec();
 
-    const data = users.map(u => {
-        u.isFollowed = profile.followers.map(f => f._id).includes(u._id);
-        return u;
+    const data = [];
+    users.forEach(u => {
+        const user = u._doc;
+        user.isFollowed = profile.followers.map(f => f._id.toString()).includes(u._id.toString());
+        data.push(user);
     });
 
     res.json({
@@ -115,34 +118,31 @@ export const updateProfile = async (req, res) => {
     });
 }
 
-export const follow = async (req, res) => {
+export const toggleFollow = async (req, res) => {
     const userId = req.params.id;
-    const friendId = req.query['friendId'];
+    const friendId = req.query['userId'];
+    const isFollow = req.query['isFollow'];
 
-    await Profile.findOneAndUpdate(
-        {_id: userId},
-        {$push: {followers: [friendId]}},
-    ).exec();
+    let query;
+    if (JSON.parse(isFollow)) {
+        query = {$addToSet: {followers: friendId}};
+    } else {
+        query = {$pull: {followers: friendId}}
+    }
+
+    const profile = await Profile.findOneAndUpdate({_id: userId}, query,).exec();
+
+    if (JSON.parse(isFollow)) {
+        sendMsg({
+            fromId: userId,
+            from: `${profile.firstName} ${profile.secondName}`,
+            msg: `Пользователь %s теперь подписан на Вас!`
+        }, friendId, Events.FOLLOW_EVENT);
+    }
 
     res.json({
         resultCode: 0,
     });
-
-}
-
-export const unfollow = async (req, res) => {
-    const userId = req.params.id;
-    const friendId = req.query['friendId'];
-
-    await Profile.findOneAndUpdate(
-        {_id: userId},
-        {$push: {friends: [friendId]}},
-    ).exec();
-
-    res.json({
-        resultCode: 0,
-    });
-
 }
 
 export const deleteUserImage = async (req, res, next) => {
