@@ -10,6 +10,7 @@ export const Events = {
     FOLLOW_EVENT: 'FOLLOW_EVENT'
 };
 
+
 export const server = http.createServer();
 const wsServer = new WebSocketServer({server, perMessageDeflate: false});
 
@@ -55,6 +56,7 @@ function processReceivedMessage(message) {
             json.data = userActivity;
             break;
         default:
+            json.data = userActivity;
             break;
     }
 
@@ -74,9 +76,12 @@ function handleClientDisconnection(message, userId) {
 }
 
 function sendMessageToAllClients(msg) {
-    wsServer.clients.forEach(function (client) {
-        client.send(JSON.stringify(msg));
-    });
+    userActivity.forEach(user => {
+        if (clients[user]) {
+            console.log(clients[user]);
+            clients[user].send(JSON.stringify(msg));
+        }
+    })
 }
 
 export function sendMsg(msg, clientId, type) {

@@ -5,15 +5,24 @@ import PostUserRating from '../models/PostUserRating.js';
 import {removeFile} from './FileController.js';
 import Post from '../models/Post.js';
 import {Events, sendMsg} from "../configs/ws.js";
+import {calculateOffsetAndLimit} from "../utils/helper.js";
 
 export const getAllUsers = async (req, res) => {
+
+    const currentPage = req.query['currentPage'];
+
     const profile = await Profile.findOne({_id: {$in: req.userId}})
         .populate('followers')
         .exec();
 
 
+    let count = await Profile.countDocuments({_id: {$not: {$in: req.userId}}});
+    let offsetAndLimit = calculateOffsetAndLimit(currentPage);
+
     let users = await Profile.find({_id: {$not: {$in: req.userId}}})
         .populate('avatar')
+        .skip(offsetAndLimit.offset)
+        .limit(offsetAndLimit.limit)
         .exec();
 
     const data = [];
@@ -26,7 +35,7 @@ export const getAllUsers = async (req, res) => {
     res.json({
         resultCode: 0,
         data: data,
-        totalCount: data.length
+        totalCount: count
     });
 };
 

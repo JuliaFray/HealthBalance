@@ -5,6 +5,7 @@ import Comment from '../models/Comment.js';
 import {removeFile} from './FileController.js';
 import PostUserRating from '../models/PostUserRating.js';
 import Tag from '../models/Tag.js';
+import {calculateOffsetAndLimit} from "../utils/helper.js";
 
 export const getAll = async (req, res) => {
     const tags = req.query['tags'];
@@ -12,6 +13,7 @@ export const getAll = async (req, res) => {
     const isFavoriteStr = req.query['isFavorite'];
     const isBest = req.query['isBest'];
     const filter = req.query['filter'];
+    const currentPage = req.query['currentPage'];
     const isFavorite = isFavoriteStr && JSON.parse(isFavoriteStr);
 
     const popular = await Post.findOne().sort('-viewsCount');
@@ -38,6 +40,9 @@ export const getAll = async (req, res) => {
         }
     }
 
+    let count = await Post.countDocuments(where);
+    let offsetAndLimit = calculateOffsetAndLimit(currentPage);
+
     let posts = await Post.find(where)
         .select(['-__v', '-updatedAt', '-author.__v'])
         .populate('comments')
@@ -61,7 +66,8 @@ export const getAll = async (req, res) => {
             },
             select: (['-__v', '-age', '-city', '-status', '-contacts'])
         })
-        .limit(10)
+        .limit(offsetAndLimit.limit)
+        .skip(offsetAndLimit.offset)
         .exec();
 
     if (isBest) {
@@ -82,7 +88,8 @@ export const getAll = async (req, res) => {
 
     res.json({
         resultCode: 0,
-        data: posts
+        data: posts,
+        totalCount: count
     });
 }
 
