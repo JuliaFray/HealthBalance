@@ -14,12 +14,14 @@ export default (req, res, next) => {
             next();
         } catch (err) {
             return res.status(403).json({
-                message: ACCESS_DENIED
+                message: ACCESS_DENIED,
+                resultCode: 3
             })
         }
     } else {
         return res.status(403).json({
-            message: ACCESS_DENIED
+            message: ACCESS_DENIED,
+            resultCode: 3
         })
     }
 }

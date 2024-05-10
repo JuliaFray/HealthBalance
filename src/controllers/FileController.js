@@ -1,6 +1,7 @@
 import {MongoClient, ObjectId} from 'mongodb';
 import {UNDEFINED_ERROR} from '../utils/errors.js';
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+import {DATABASE_NAME} from "../utils/constants.js";
 
 const url = process.env.DB_URI_GET_FILES;
 const mongoClient = new MongoClient(url);
@@ -11,7 +12,7 @@ let gridFS;
 
 connect.once('open', () => {
     gridFS = new mongoose.mongo.GridFSBucket(connect.db, {
-        bucketName: "photos.files"
+        bucketName: 'photos.files'
     });
 });
 
@@ -44,7 +45,7 @@ export const getFileById = async (req, res) => {
 export const getFile = async (imageId) => {
     await mongoClient.connect()
 
-    const chunk = mongoClient.db('dmj')
+    const chunk = mongoClient.db(DATABASE_NAME)
         .collection('photos.chunks')
         .find({'files_id': new ObjectId(imageId)}).toArray();
 
@@ -57,7 +58,7 @@ export const getFile = async (imageId) => {
 export const removeFile = async (fileId) => {
     await mongoClient.connect()
 
-    await mongoClient.db('dmj')
+    await mongoClient.db(DATABASE_NAME)
         .collection('photos.chunks')
         .deleteOne({'files_id': new ObjectId(fileId)});
 }

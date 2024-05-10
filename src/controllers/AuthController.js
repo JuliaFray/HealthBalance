@@ -3,45 +3,36 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import * as ERRORS from '../utils/errors.js';
 import {EXPIRES_KEY, SECRET_KEY} from '../utils/constants.js';
-import Profile from "../models/Profile.js";
+import Profile from '../models/Profile.js';
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
 
 export const register = asyncErrorHandler(async (req, res) => {
-    const pass = req.body.password;
-    const salt = await bcrypt.genSalt(10);
-    const passHash = await bcrypt.hash(pass, salt);
-
-    const docUser = new User({
+    await new User({
         email: req.body.email,
-        passwordHash: passHash
-    });
+        passwordHash: await bcrypt.hash(req.body.password, await bcrypt.genSalt(10))
+    }).save()
+        .then(resUser => new Profile({
+                _id: resUser._id,
+                firstName: req.body.firstName,
+                secondName: req.body.secondName,
+                lastName: req.body.lastName
+            }).save()
+        )
+        .then(resProfile => {
+            const token = jwt.sign(
+                {_id: resProfile._id},
+                SECRET_KEY,
+                {expiresIn: EXPIRES_KEY}
+            );
 
-    const docProfile = new Profile({
-        _id: docUser._id,
-        firstName: req.body.firstName,
-        secondName: req.body.secondName,
-        lastName: req.body.lastName
-    });
+            const {passwordHash, ...userData} = resProfile._doc;
 
-    await docUser.save()
-        .then(async () => {
-            await docProfile.save()
-                .then(() => {
-                    const token = jwt.sign(
-                        {_id: docUser._id},
-                        SECRET_KEY,
-                        {expiresIn: EXPIRES_KEY}
-                    );
-
-                    const {passwordHash, ...userData} = docUser._doc;
-
-                    res.json({
-                        resultCode: 0,
-                        data: userData,
-                        token: token
-                    });
-                })
-        })
+            res.json({
+                resultCode: 0,
+                data: userData,
+                token: token
+            });
+        });
 });
 
 export const login = async (req, res) => {
@@ -94,7 +85,7 @@ export const status = async (req, res) => {
         });
 
     } catch (err) {
-        console.log(err);
+        console.error(err);
         res.status(500).json({
             resultCode: 1,
             error: ERRORS.ACCESS_DENIED

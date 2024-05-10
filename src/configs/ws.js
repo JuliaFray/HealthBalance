@@ -7,7 +7,8 @@ export const Events = {
     USER_EVENT: 'USER_EVENT',
     LOGOUT_EVENT: 'LOGOUT_EVENT',
     AUTH_EVENT: 'AUTH_EVENT',
-    FOLLOW_EVENT: 'FOLLOW_EVENT'
+    FOLLOW_EVENT: 'FOLLOW_EVENT',
+    FRIEND_EVENT: 'FRIEND_EVENT'
 };
 
 
@@ -78,7 +79,6 @@ function handleClientDisconnection(message, userId) {
 function sendMessageToAllClients(msg) {
     userActivity.forEach(user => {
         if (clients[user]) {
-            console.log(clients[user]);
             clients[user].send(JSON.stringify(msg));
         }
     })

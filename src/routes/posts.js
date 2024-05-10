@@ -8,8 +8,9 @@ import {
     deletePost,
     deletePostImage,
     getAll,
-    getPopularPost,
+    getPopularPosts,
     getPost,
+    getRecommendationPosts,
     setFavorites,
     toggleRating,
     updatePost
@@ -23,7 +24,8 @@ router.use(checkAuth);
 router.get('/', getAll);
 router.put('/:id/like', setFavorites);
 router.put('/:id/rating', toggleRating);
-router.get('/popular', getPopularPost);
+router.get('/popular', getPopularPosts);
+router.get('/recommendations', getRecommendationPosts);
 router.get('/:id', getPost);
 router.post('/', postCreateValidation, upload.single('image'), handleErrors, createPost);
 router.put('/:id', postCreateValidation, deletePostImage, upload.single('image'), handleErrors, updatePost);

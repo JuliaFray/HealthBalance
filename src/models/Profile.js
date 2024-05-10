@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import File from "./File.js";
 import Contact from "./Contact.js";
+import ProfileFriends from "./ProfileFriends.js";
 
 const ProfileSchema = new mongoose.Schema({
     firstName: {
@@ -25,11 +26,6 @@ const ProfileSchema = new mongoose.Schema({
         ref: Contact,
         required: false
     },
-    friends: {
-        type: [mongoose.Schema.ObjectId],
-        ref: 'Profile',
-        default: []
-    },
     followers: {
         type: [mongoose.Schema.ObjectId],
         ref: 'Profile',
@@ -47,6 +43,14 @@ ProfileSchema.virtual('avatar', {
     localField: 'avatarId',
     foreignField: 'files_id',
     justOne: true
+})
+
+ProfileSchema.virtual('friends', {
+    ref: ProfileFriends,
+    localField: '_id',
+    foreignField: 'from',
+}).get(arr => {
+    return Array.isArray(arr) ? arr.filter(val => val.isAgree) : []
 })
 
 export default mongoose.model('Profile', ProfileSchema);

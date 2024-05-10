@@ -16,18 +16,12 @@ export const getAll = async (req, res) => {
     const currentPage = req.query['currentPage'];
     const isFavorite = isFavoriteStr && JSON.parse(isFavoriteStr);
 
-    const popular = await Post.findOne().sort('-viewsCount');
-
     let where;
 
     if (userId && !isFavorite) {
         where = {author: {$in: userId}}
-    } else {
-        if (tags) {
-            where = {tags: {$in: tags}}
-        } else {
-            where = {_id: {$not: {$in: popular._id}}}
-        }
+    } else if (tags) {
+        where = {tags: {$in: tags}}
     }
 
     if (filter) {
@@ -61,9 +55,7 @@ export const getAll = async (req, res) => {
         })
         .populate({
             path: 'author',
-            populate: {
-                path: 'avatar'
-            },
+            populate: {path: 'avatar'},
             select: (['-__v', '-age', '-city', '-status', '-contacts'])
         })
         .limit(offsetAndLimit.limit)
@@ -121,7 +113,7 @@ export const setFavorites = async (req, res) => {
                 }
             }
         }).catch(err => {
-            console.log(err);
+            console.error(err);
             res.status(400).json({
                 resultCode: 1,
                 message: ERRORS.UNDEFINED_ERROR
@@ -140,31 +132,70 @@ export const toggleRating = async (req, res) => {
         {$set: {rating: rating}},
         {upsert: true}
     ).exec()
-
-    res.json({
-        resultCode: 0
-    });
+        .then(() => {
+            res.json({
+                resultCode: 0
+            });
+        })
 }
 
-export const getPopularPost = async (req, res) => {
-    Post.findOne()
+export const getPopularPosts = async (req, res) => {
+    Post.find()
         .sort('-viewsCount')
         .populate('image')
+        .limit(5)
         .then((post) => {
             if (!post) {
                 res.status(404).json({
+                    resultCode: 1,
                     error: ERRORS.NOT_FOUND
                 })
             }
             res.json({
-                data: post
+                data: post,
+                resultCode: 0
             })
         }).catch(err => {
-        console.log(err);
+        console.error(err);
         res.status(400).json({
-            error: ERRORS.UNDEFINED_ERROR
+            error: ERRORS.UNDEFINED_ERROR,
+            resultCode: 1,
         })
     });
+}
+
+export const getRecommendationPosts = async (req, res) => {
+    const postId = req.query['postId'];
+
+    await Post.findById(postId).populate({
+        path: 'tags',
+        select: ['_id', 'value']
+    }).exec()
+        .then(post => {
+
+            return Post
+                .find({$and: [
+                        {tags: {$in: post.tags}},
+                        {_id: {$not: {$in: post._id}}}
+                    ]})
+                .populate({
+                    path: 'tags',
+                    select: ['_id', 'value']
+                })
+                .populate({
+                    path: 'author',
+                    populate: {path: 'avatar'},
+                    select: (['-__v', '-age', '-city', '-status', '-contacts'])
+                })
+                .limit(5)
+                .exec()
+        })
+        .then(posts => {
+            res.json({
+                data: posts,
+                resultCode: 0
+            })
+        })
 }
 
 export const getPost = async (req, res) => {
@@ -177,17 +208,13 @@ export const getPost = async (req, res) => {
     )
         .populate({
             path: 'author',
-            populate: {
-                path: 'avatar'
-            },
+            populate: {path: 'avatar'},
         })
         .populate({
             path: 'comments',
             populate: {
                 path: 'author',
-                populate: {
-                    path: 'avatar'
-                },
+                populate: {path: 'avatar'},
             }
         })
         .populate('image')
@@ -204,16 +231,19 @@ export const getPost = async (req, res) => {
         .then((post) => {
             if (!post) {
                 res.status(404).json({
-                    error: ERRORS.NOT_FOUND
+                    error: ERRORS.NOT_FOUND,
+                    resultCode: 1,
                 })
             }
             res.json({
-                data: post
+                data: post,
+                resultCode: 0
             })
         }).catch(err => {
-        console.log(err);
+        console.error(err);
         res.status(400).json({
-            error: ERRORS.UNDEFINED_ERROR
+            error: ERRORS.UNDEFINED_ERROR,
+            resultCode: 1,
         })
     });
 }

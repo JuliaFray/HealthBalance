@@ -6,31 +6,49 @@ import {removeFile} from './FileController.js';
 import Post from '../models/Post.js';
 import {Events, sendMsg} from "../configs/ws.js";
 import {calculateOffsetAndLimit} from "../utils/helper.js";
+import ProfileFriends from "../models/ProfileFriends.js";
 
 export const getAllUsers = async (req, res) => {
 
     const currentPage = req.query['currentPage'];
+    const isFriends = req.query['isFriends'];
+    const isFollowers = req.query['isFollowers'];
+    const userId = req.query['userId'];
 
-    const profile = await Profile.findOne({_id: {$in: req.userId}})
+    const profile = await Profile.findOne({_id: {$in: userId || req.userId}})
         .populate('followers')
+        .populate('friends')
         .exec();
 
-
-    let count = await Profile.countDocuments({_id: {$not: {$in: req.userId}}});
+    let count = await Profile.countDocuments({_id: {$not: {$in: userId || req.userId}}});
     let offsetAndLimit = calculateOffsetAndLimit(currentPage);
 
-    let users = await Profile.find({_id: {$not: {$in: req.userId}}})
+    let where = {_id: {$not: {$in: userId || req.userId}}};
+
+    let users = await Profile.find(where)
         .populate('avatar')
+        .populate('friends')
+        .populate('followers')
         .skip(offsetAndLimit.offset)
         .limit(offsetAndLimit.limit)
         .exec();
 
-    const data = [];
+    let data = [];
     users.forEach(u => {
         const user = u._doc;
+        user.avatar = u.avatar;
         user.isFollowed = profile.followers.map(f => f._id.toString()).includes(u._id.toString());
+        user.isFriend = profile.friends.map(f => f.to.toString()).includes(u._id.toString());
         data.push(user);
     });
+
+    if (isFriends && JSON.parse(isFriends)) {
+        data = data.filter(u => profile.friends.map(f => f.to.toString()).includes(u._id.toString()));
+    }
+
+    if (isFollowers && JSON.parse(isFollowers)) {
+        data = data.filter(u => profile.followers.map(f => f._id.toString()).includes(u._id.toString()));
+    }
 
     res.json({
         resultCode: 0,
@@ -152,6 +170,33 @@ export const toggleFollow = async (req, res) => {
     res.json({
         resultCode: 0,
     });
+}
+
+export const toggleFriend = async (req, res) => {
+    const userId = req.params.id;
+    const friendId = req.query['userId'];
+    const isAddFriend = req.query['isAddFriend'];
+
+
+    await ProfileFriends.findOneAndUpdate(
+        {from: userId, to: friendId},
+        {$set: {isAgree: false}},
+        {upsert: true}
+    ).exec()
+        .then(() => Profile.findOne({_id: userId}).exec())
+        .then(profile => {
+            if (JSON.parse(isAddFriend)) {
+                sendMsg({
+                    fromId: userId,
+                    from: `${profile.firstName} ${profile.secondName}`,
+                    msg: `Пользователь %s хочет добавить Вас в друзья!`
+                }, friendId, Events.FRIEND_EVENT);
+            }
+
+            res.json({
+                resultCode: 0,
+            });
+        });
 }
 
 export const deleteUserImage = async (req, res, next) => {
