@@ -12,6 +12,7 @@ import usersRouter from './src/routes/users.js';
 import authRouter from './src/routes/auth.js';
 import postsRouter from './src/routes/posts.js';
 import profileRouter from './src/routes/profile.js';
+import dialogRouter from './src/routes/dialog.js';
 
 const __dirname = path.resolve(path.dirname(''));
 
@@ -29,6 +30,7 @@ app.use('/auth', authRouter);
 app.use('/posts', postsRouter);
 app.use('/users', usersRouter);
 app.use('/profile', profileRouter);
+app.use('/dialog', dialogRouter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // catch 404 and forward to error handler

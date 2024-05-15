@@ -45,6 +45,14 @@ ProfileSchema.virtual('avatar', {
     justOne: true
 })
 
+ProfileSchema.virtual('friends1', {
+    ref: ProfileFriends,
+    localField: '_id',
+    foreignField: 'to',
+}).get(arr => {
+    return Array.isArray(arr) ? arr.filter(val => val.isAgree) : []
+})
+
 ProfileSchema.virtual('friends', {
     ref: ProfileFriends,
     localField: '_id',

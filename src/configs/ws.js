@@ -11,6 +11,10 @@ export const Events = {
     FRIEND_EVENT: 'FRIEND_EVENT'
 };
 
+export const EventsType = {
+    FOLLOW: 'FOLLOW',
+    FRIEND: 'FRIEND'
+};
 
 export const server = http.createServer();
 const wsServer = new WebSocketServer({server, perMessageDeflate: false});

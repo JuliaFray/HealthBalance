@@ -4,7 +4,7 @@ import Comment from '../models/Comment.js';
 import PostUserRating from '../models/PostUserRating.js';
 import {removeFile} from './FileController.js';
 import Post from '../models/Post.js';
-import {Events, sendMsg} from "../configs/ws.js";
+import {Events, EventsType, sendMsg} from "../configs/ws.js";
 import {calculateOffsetAndLimit} from "../utils/helper.js";
 import ProfileFriends from "../models/ProfileFriends.js";
 
@@ -18,6 +18,7 @@ export const getAllUsers = async (req, res) => {
     const profile = await Profile.findOne({_id: {$in: userId || req.userId}})
         .populate('followers')
         .populate('friends')
+        .populate('friends1')
         .exec();
 
     let count = await Profile.countDocuments({_id: {$not: {$in: userId || req.userId}}});
@@ -27,7 +28,8 @@ export const getAllUsers = async (req, res) => {
 
     let users = await Profile.find(where)
         .populate('avatar')
-        .populate('friends')
+        // .populate('friends')
+        // .populate('friends1')
         .populate('followers')
         .skip(offsetAndLimit.offset)
         .limit(offsetAndLimit.limit)
@@ -38,13 +40,16 @@ export const getAllUsers = async (req, res) => {
         const user = u._doc;
         user.avatar = u.avatar;
         user.isFollowed = profile.followers.map(f => f._id.toString()).includes(u._id.toString());
-        user.isFriend = profile.friends.map(f => f.to.toString()).includes(u._id.toString());
+        // user.isFriend =
+        //     profile.friends.map(f => f.to.toString()).includes(u._id.toString()) || profile.friends1.map(f => f.from.toString()).includes(u._id.toString());
         data.push(user);
     });
 
-    if (isFriends && JSON.parse(isFriends)) {
-        data = data.filter(u => profile.friends.map(f => f.to.toString()).includes(u._id.toString()));
-    }
+    // if (isFriends && JSON.parse(isFriends)) {
+    //     console.log(profile.friends, profile.friends1);
+    //     data = data.filter(u => profile.friends.map(f => f.to.toString()).includes(u._id.toString()) ||
+    //         profile.friends1.map(f => f.from.toString()).includes(u._id.toString()));
+    // }
 
     if (isFollowers && JSON.parse(isFollowers)) {
         data = data.filter(u => profile.followers.map(f => f._id.toString()).includes(u._id.toString()));
@@ -102,12 +107,14 @@ export const getProfileStats = async (req, res) => {
         .find({user: {$in: req.params.id}})
         .exec();
 
+    let followers = await Profile.findById(req.params.id).populate('followers').exec();
+
     res.json({
         resultCode: 0,
         data: {
             posts: posts.length,
             favorites: favorites.filter(it => it.likes).length,
-            friends: 0,
+            followers: followers.followers.length,
             rating: posts.reduce((sum, el) => sum + el.rating, 0) || 0,
             marks: marks.filter(it => it.rating).length || 0,
             comments: comments.length || 0
@@ -163,7 +170,8 @@ export const toggleFollow = async (req, res) => {
         sendMsg({
             fromId: userId,
             from: `${profile.firstName} ${profile.secondName}`,
-            msg: `Пользователь %s теперь подписан на Вас!`
+            msg: `Пользователь %s теперь подписан на Вас!`,
+            type: EventsType.FOLLOW
         }, friendId, Events.FOLLOW_EVENT);
     }
 
@@ -172,7 +180,7 @@ export const toggleFollow = async (req, res) => {
     });
 }
 
-export const toggleFriend = async (req, res) => {
+export const createFriendLink = async (req, res) => {
     const userId = req.params.id;
     const friendId = req.query['userId'];
     const isAddFriend = req.query['isAddFriend'];
@@ -189,7 +197,8 @@ export const toggleFriend = async (req, res) => {
                 sendMsg({
                     fromId: userId,
                     from: `${profile.firstName} ${profile.secondName}`,
-                    msg: `Пользователь %s хочет добавить Вас в друзья!`
+                    msg: `Пользователь %s хочет добавить Вас в друзья!`,
+                    type: EventsType.FRIEND
                 }, friendId, Events.FRIEND_EVENT);
             }
 
@@ -197,6 +206,34 @@ export const toggleFriend = async (req, res) => {
                 resultCode: 0,
             });
         });
+}
+
+export const toggleFriend = async (req, res) => {
+    const userId = req.params.id;
+    const fromId = req.query['fromId'];
+    const isAgree = req.query['isAgree'];
+
+    if (isAgree && JSON.parse(isAgree)) {
+        await ProfileFriends.findOneAndUpdate(
+            {from: fromId, to: userId},
+            {$set: {isAgree: true}},
+            {upsert: true}
+        ).exec()
+            .then(() => {
+                res.json({
+                    resultCode: 0,
+                });
+            });
+    } else {
+        await ProfileFriends.deleteOne(
+            {from: fromId, to: userId}
+        ).exec()
+            .then(() => {
+                res.json({
+                    resultCode: 0,
+                });
+            });
+    }
 }
 
 export const deleteUserImage = async (req, res, next) => {
@@ -210,4 +247,30 @@ export const deleteUserImage = async (req, res, next) => {
         await removeFile(profile.avatarId)
     }
     next();
+}
+
+export const getFriendNotifications = async (req, res) => {
+    await ProfileFriends.find({
+        $and: [
+            {isAgree: false},
+            {to: {$in: req.params.id}}
+        ]
+    })
+        .populate('from')
+        .exec()
+        .then(ntfs => {
+            ntfs.forEach(ntf => {
+                sendMsg({
+                    fromId: ntf.from._id,
+                    from: `${ntf.from.firstName} ${ntf.from.secondName}`,
+                    msg: `Пользователь %s хочет добавить Вас в друзья!`,
+                    type: EventsType.FRIEND
+                }, req.params.id, Events.FRIEND_EVENT);
+            })
+
+
+            res.json({
+                resultCode: 0,
+            });
+        });
 }

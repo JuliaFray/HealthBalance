@@ -5,77 +5,92 @@ import Comment from '../models/Comment.js';
 import {removeFile} from './FileController.js';
 import PostUserRating from '../models/PostUserRating.js';
 import Tag from '../models/Tag.js';
-import {calculateOffsetAndLimit} from "../utils/helper.js";
+import {calculateOffsetAndLimit} from '../utils/helper.js';
+import Profile from "../models/Profile.js";
 
 export const getAll = async (req, res) => {
-    const tags = req.query['tags'];
     const userId = req.query['userId'];
-    const isFavoriteStr = req.query['isFavorite'];
-    const isBest = req.query['isBest'];
-    const filter = req.query['filter'];
+
+    const searchValue = req.query['searchValue'];
+    const tabIndex = +req.query['tabIndex'];
+    const tags = req.query['tags'];
     const currentPage = req.query['currentPage'];
-    const isFavorite = isFavoriteStr && JSON.parse(isFavoriteStr);
+    const isFavoritePosts = !!req.query['isFavoritePosts'] && JSON.parse(req.query['isFavoritePosts']);
+    const isMinePosts = !!req.query['isMinePosts'] && JSON.parse(req.query['isMinePosts']);
 
-    let where;
-
-    if (userId && !isFavorite) {
-        where = {author: {$in: userId}}
-    } else if (tags) {
-        where = {tags: {$in: tags}}
-    }
-
-    if (filter) {
-        where = {
-            ...where,
-            $or: [
-                {title: {$regex: filter, $options: 'i'}},
-                {text: {$regex: filter, $options: 'i'}}
-            ]
-        }
-    }
-
-    let count = await Post.countDocuments(where);
-    let offsetAndLimit = calculateOffsetAndLimit(currentPage);
-
-    let posts = await Post.find(where)
-        .select(['-__v', '-updatedAt', '-author.__v'])
-        .populate('comments')
-        .populate({
-            path: 'likes',
-            match: {'user': {$in: req.userId}}
-        })
-        .populate('rating')
-        .populate({
-            path: 'userRating',
-            match: {'user': {$in: req.userId}}
-        })
-        .populate({
-            path: 'tags',
-            select: ['_id', 'value']
-        })
-        .populate({
-            path: 'author',
-            populate: {path: 'avatar'},
-            select: (['-__v', '-age', '-city', '-status', '-contacts'])
-        })
-        .limit(offsetAndLimit.limit)
-        .skip(offsetAndLimit.offset)
+    const profile = await Profile.findById(userId)
+        .populate('followers')
         .exec();
 
-    if (isBest) {
-        if (JSON.parse(isBest)) {
-            posts.sort((a, b) => {
-                return b.rating - a.rating
-            })
-        } else {
-            posts.sort((a, b) => {
-                return b.createdAt - a.createdAt
-            })
-        }
+    const where = [];
+
+    if (searchValue) {
+        where.push({
+            $or: [
+                {title: {$regex: searchValue, $options: 'i'}},
+                {text: {$regex: searchValue, $options: 'i'}}
+            ]
+        });
     }
 
-    if (isFavoriteStr && JSON.parse(isFavoriteStr)) {
-        posts = posts.filter(it => !!it.likes)
+    if (tags) {
+        where.push({tags: {$in: tags}});
+    }
+
+    if (isMinePosts && !isFavoritePosts) {
+        where.push({author: {$in: userId}});
+    }
+
+    if (tabIndex === 0) {
+        where.push({author: {$in: profile.followers}});
+    }
+
+    let query = where.length ? {$and: [...where]} : {};
+
+    let count = await Post.countDocuments(query).exec();
+    let offsetAndLimit = calculateOffsetAndLimit(currentPage);
+
+    let posts;
+
+    if (isFavoritePosts) {
+        posts = await Post.find(query, {}, {sort: {createdAt: -1}})
+            .select(['-__v', '-updatedAt', '-author.__v'])
+            .populate('comments')
+            .populate({path: 'likes', match: {'user': {$in: req.userId}}})
+            .populate({path: 'rating'})
+            .populate({path: 'userRating', match: {'user': {$in: req.userId}}})
+            .populate({path: 'tags', select: ['_id', 'value']})
+            .populate({
+                path: 'author', populate: {path: 'avatar'},
+                select: (['-__v', '-age', '-city', '-status', '-contacts'])
+            })
+            .exec();
+    } else {
+        posts = await Post.find(query, {}, {sort: {createdAt: -1}})
+            .select(['-__v', '-updatedAt', '-author.__v'])
+            .populate('comments')
+            .populate({path: 'likes', match: {'user': {$in: req.userId}}})
+            .populate({path: 'rating'})
+            .populate({path: 'userRating', match: {'user': {$in: req.userId}}})
+            .populate({path: 'tags', select: ['_id', 'value']})
+            .populate({
+                path: 'author', populate: {path: 'avatar'},
+                select: (['-__v', '-age', '-city', '-status', '-contacts'])
+            })
+            .limit(offsetAndLimit.limit)
+            .skip(offsetAndLimit.offset)
+            .exec();
+    }
+
+    if (isFavoritePosts) {
+        count = posts.filter(it => !!it.likes).length;
+        posts = posts.filter(it => !!it.likes);
+    }
+
+    if (tabIndex === 2) {
+        posts.sort((a, b) => {
+            return b.rating - a.rating
+        })
     }
 
     res.json({
@@ -174,10 +189,12 @@ export const getRecommendationPosts = async (req, res) => {
         .then(post => {
 
             return Post
-                .find({$and: [
+                .find({
+                    $and: [
                         {tags: {$in: post.tags}},
                         {_id: {$not: {$in: post._id}}}
-                    ]})
+                    ]
+                })
                 .populate({
                     path: 'tags',
                     select: ['_id', 'value']
