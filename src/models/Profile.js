@@ -19,7 +19,7 @@ const ProfileSchema = new mongoose.Schema({
     avatarId: {
         type: mongoose.Schema.ObjectId
     },
-    age: Number,
+    age: String,
     city: String,
     contacts: {
         type: mongoose.Schema.ObjectId,

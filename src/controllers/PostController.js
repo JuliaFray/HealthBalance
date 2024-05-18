@@ -7,6 +7,7 @@ import PostUserRating from '../models/PostUserRating.js';
 import Tag from '../models/Tag.js';
 import {calculateOffsetAndLimit} from '../utils/helper.js';
 import Profile from "../models/Profile.js";
+import {UNDEFINED_ERROR} from "../utils/errors.js";
 
 export const getAll = async (req, res) => {
     const userId = req.query['userId'];
@@ -18,9 +19,19 @@ export const getAll = async (req, res) => {
     const isFavoritePosts = !!req.query['isFavoritePosts'] && JSON.parse(req.query['isFavoritePosts']);
     const isMinePosts = !!req.query['isMinePosts'] && JSON.parse(req.query['isMinePosts']);
 
+
+    if (!userId) {
+        res.json({
+            resultCode: 1,
+            message: UNDEFINED_ERROR
+        });
+        return;
+    }
+
     const profile = await Profile.findById(userId)
         .populate('followers')
         .exec();
+
 
     const where = [];
 
