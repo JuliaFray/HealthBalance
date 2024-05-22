@@ -15,7 +15,8 @@ export const Events = {
 
 export const EventsType = {
     FOLLOW: 'FOLLOW',
-    FRIEND: 'FRIEND'
+    FRIEND: 'FRIEND',
+    MSG: 'MSG'
 };
 
 export const server = http.createServer();
@@ -64,9 +65,15 @@ function processReceivedMessage(message) {
             break;
         case Events.MSG_EVENT:
             saveMessage(dataFromClient.msg)
-                .then((msg) => {
-                    sendMsg(msg, dataFromClient.msg.to, dataFromClient.type);
-                    sendMsg(msg, dataFromClient.msg.from, dataFromClient.type)
+                .then((data) => {
+                    sendMsg(dataFromClient.msg.to, dataFromClient.type, data,
+                        {
+                            fromId: dataFromClient.msg.from,
+                            from: `${data.from.firstName} ${data.from.secondName}`,
+                            msg: `Пользователь %s отправил Вам сообщение!`,
+                            type: EventsType.MSG
+                        });
+                    sendMsg(dataFromClient.msg.from, dataFromClient.type, data, null)
                 });
 
             return;
@@ -98,8 +105,8 @@ function sendMessageToAllClients(msg) {
     })
 }
 
-export function sendMsg(msg, clientId, type) {
+export function sendMsg(clientId, type, data, msg) {
     if (clients[clientId]) {
-        clients[clientId].send(JSON.stringify({type: type, data: msg}));
+        clients[clientId].send(JSON.stringify({type: type, data: data, msg: msg}));
     }
 }

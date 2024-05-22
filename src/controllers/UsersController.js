@@ -167,12 +167,17 @@ export const toggleFollow = async (req, res) => {
     const profile = await Profile.findOneAndUpdate({_id: userId}, query,).exec();
 
     if (JSON.parse(isFollow)) {
-        sendMsg({
-            fromId: userId,
-            from: `${profile.firstName} ${profile.secondName}`,
-            msg: `Пользователь %s теперь подписан на Вас!`,
-            type: EventsType.FOLLOW
-        }, friendId, Events.FOLLOW_EVENT);
+        sendMsg(
+            friendId,
+            Events.FOLLOW_EVENT,
+            null,
+            {
+                fromId: userId,
+                from: `${profile.firstName} ${profile.secondName}`,
+                msg: `Пользователь %s теперь подписан на Вас!`,
+                type: EventsType.FOLLOW
+            }
+        );
     }
 
     res.json({
@@ -194,12 +199,16 @@ export const createFriendLink = async (req, res) => {
         .then(() => Profile.findOne({_id: userId}).exec())
         .then(profile => {
             if (JSON.parse(isAddFriend)) {
-                sendMsg({
-                    fromId: userId,
-                    from: `${profile.firstName} ${profile.secondName}`,
-                    msg: `Пользователь %s хочет добавить Вас в друзья!`,
-                    type: EventsType.FRIEND
-                }, friendId, Events.FRIEND_EVENT);
+                sendMsg(
+                    friendId,
+                    Events.FRIEND_EVENT,
+                    null,
+                    {
+                        fromId: userId,
+                        from: `${profile.firstName} ${profile.secondName}`,
+                        msg: `Пользователь %s хочет добавить Вас в друзья!`,
+                        type: EventsType.FRIEND
+                    });
             }
 
             res.json({
@@ -260,12 +269,16 @@ export const getFriendNotifications = async (req, res) => {
         .exec()
         .then(ntfs => {
             ntfs.forEach(ntf => {
-                sendMsg({
-                    fromId: ntf.from._id,
-                    from: `${ntf.from.firstName} ${ntf.from.secondName}`,
-                    msg: `Пользователь %s хочет добавить Вас в друзья!`,
-                    type: EventsType.FRIEND
-                }, req.params.id, Events.FRIEND_EVENT);
+                sendMsg(
+                    req.params.id,
+                    Events.FRIEND_EVENT,
+                    null,
+                    {
+                        fromId: ntf.from._id,
+                        from: `${ntf.from.firstName} ${ntf.from.secondName}`,
+                        msg: `Пользователь %s хочет добавить Вас в друзья!`,
+                        type: EventsType.FRIEND
+                    });
             })
 
 
