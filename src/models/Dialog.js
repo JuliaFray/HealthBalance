@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const Dialog = new mongoose.Schema({
-    user: {
+    users: {
         type: [mongoose.Schema.ObjectId],
         ref: 'Profile',
     },
@@ -9,6 +9,10 @@ const Dialog = new mongoose.Schema({
         type: String,
         required: false
     },
+    isPrivate: {
+        type: Boolean,
+        required: true
+    }
 }, {
     timestamps: true
 });

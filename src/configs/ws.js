@@ -1,6 +1,7 @@
 import {WebSocketServer} from 'ws';
 import http from 'http';
 import app from './../../app.js';
+import {saveMessage} from "../controllers/DialogController.js";
 
 
 export const Events = {
@@ -8,7 +9,8 @@ export const Events = {
     LOGOUT_EVENT: 'LOGOUT_EVENT',
     AUTH_EVENT: 'AUTH_EVENT',
     FOLLOW_EVENT: 'FOLLOW_EVENT',
-    FRIEND_EVENT: 'FRIEND_EVENT'
+    FRIEND_EVENT: 'FRIEND_EVENT',
+    MSG_EVENT: 'MSG_EVENT'
 };
 
 export const EventsType = {
@@ -60,6 +62,14 @@ function processReceivedMessage(message) {
             userActivity = userActivity.filter(it => it !== dataFromClient.id);
             json.data = userActivity;
             break;
+        case Events.MSG_EVENT:
+            saveMessage(dataFromClient.msg)
+                .then((msg) => {
+                    sendMsg(msg, dataFromClient.msg.to, dataFromClient.type);
+                    sendMsg(msg, dataFromClient.msg.from, dataFromClient.type)
+                });
+
+            return;
         default:
             json.data = userActivity;
             break;
