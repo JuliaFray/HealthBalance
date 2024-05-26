@@ -40,11 +40,22 @@ export const getMessagesByDialog = async (req, res) => {
 export const saveMessage = async (req, res) => {
     let promise;
     if (!req.dialogId) {
-        promise = new Dialog({
+        promise = Dialog.findOne({
             users: [req.to, req.from],
             isPrivate: true
         })
-            .save()
+            .exec()
+            .then(dialog => {
+                if (dialog) {
+                    return dialog
+                } else {
+                    return new Dialog({
+                        users: [req.to, req.from],
+                        isPrivate: true
+                    })
+                        .save()
+                }
+            })
     } else {
         promise = Dialog.findOneAndUpdate(
             {_id: req.dialogId},
@@ -52,6 +63,7 @@ export const saveMessage = async (req, res) => {
             {upsert: true})
             .exec();
     }
+
     return promise
         .then(dialog => {
             return new Message({

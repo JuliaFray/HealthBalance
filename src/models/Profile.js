@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import File from "./File.js";
-import Contact from "./Contact.js";
 import ProfileFriends from "./ProfileFriends.js";
 
 const ProfileSchema = new mongoose.Schema({
@@ -21,11 +20,6 @@ const ProfileSchema = new mongoose.Schema({
     },
     age: String,
     city: String,
-    contacts: {
-        type: mongoose.Schema.ObjectId,
-        ref: Contact,
-        required: false
-    },
     followers: {
         type: [mongoose.Schema.ObjectId],
         ref: 'Profile',

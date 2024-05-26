@@ -7,18 +7,16 @@ import Post from '../models/Post.js';
 import {Events, EventsType, sendMsg} from "../configs/ws.js";
 import {calculateOffsetAndLimit} from "../utils/helper.js";
 import ProfileFriends from "../models/ProfileFriends.js";
+import User from "../models/User.js";
 
 export const getAllUsers = async (req, res) => {
 
     const currentPage = req.query['currentPage'];
-    const isFriends = req.query['isFriends'];
     const isFollowers = req.query['isFollowers'];
     const userId = req.query['userId'];
 
     const profile = await Profile.findOne({_id: {$in: userId || req.userId}})
         .populate('followers')
-        .populate('friends')
-        .populate('friends1')
         .exec();
 
     let count = await Profile.countDocuments({_id: {$not: {$in: userId || req.userId}}});
@@ -28,8 +26,6 @@ export const getAllUsers = async (req, res) => {
 
     let users = await Profile.find(where)
         .populate('avatar')
-        // .populate('friends')
-        // .populate('friends1')
         .populate('followers')
         .skip(offsetAndLimit.offset)
         .limit(offsetAndLimit.limit)
@@ -40,16 +36,8 @@ export const getAllUsers = async (req, res) => {
         const user = u._doc;
         user.avatar = u.avatar;
         user.isFollowed = profile.followers.map(f => f._id.toString()).includes(u._id.toString());
-        // user.isFriend =
-        //     profile.friends.map(f => f.to.toString()).includes(u._id.toString()) || profile.friends1.map(f => f.from.toString()).includes(u._id.toString());
         data.push(user);
     });
-
-    // if (isFriends && JSON.parse(isFriends)) {
-    //     console.log(profile.friends, profile.friends1);
-    //     data = data.filter(u => profile.friends.map(f => f.to.toString()).includes(u._id.toString()) ||
-    //         profile.friends1.map(f => f.from.toString()).includes(u._id.toString()));
-    // }
 
     if (isFollowers && JSON.parse(isFollowers)) {
         data = data.filter(u => profile.followers.map(f => f._id.toString()).includes(u._id.toString()));
@@ -63,20 +51,30 @@ export const getAllUsers = async (req, res) => {
 };
 
 export const getProfile = async (req, res) => {
+    const my = await Profile.findOne({_id: {$in: req.userId}})
+        .populate('followers')
+        .exec();
+
     const profile = await Profile
         .findById(req.params.id)
         .populate('avatar')
-        .populate({
-            path: 'contacts',
-            select: ['-_id']
-        })
         .exec();
 
+
+    const user = await User
+        .findById(req.params.id)
+
+    const data = {
+        isFollowed: my.followers.map(f => f._id.toString()).includes(profile._id.toString()),
+        avatar: profile.avatar,
+        createdAt: user.createdAt,
+        ...profile._doc
+    }
 
     if (profile) {
         res.json({
             resultCode: 0,
-            data: profile
+            data: data
         })
     } else {
         res.status(404).json({
@@ -113,10 +111,10 @@ export const getProfileStats = async (req, res) => {
         resultCode: 0,
         data: {
             posts: posts.length,
-            favorites: favorites.filter(it => it.likes).length,
+            favorites: req.userId === req.params.id ? favorites.filter(it => it.likes).length : undefined,
             followers: followers.followers.length,
             rating: posts.reduce((sum, el) => sum + el.rating, 0) || 0,
-            marks: marks.filter(it => it.rating).length || 0,
+            marks: req.userId === req.params.id ? marks.filter(it => it.rating).length || 0 : undefined,
             comments: comments.length || 0
         }
     })
@@ -140,10 +138,6 @@ export const updateProfile = async (req, res) => {
         {returnDocument: 'after'}
     )
         .populate('avatar')
-        .populate({
-            path: 'contacts',
-            select: ['-_id']
-        })
         .exec();
 
     res.json({

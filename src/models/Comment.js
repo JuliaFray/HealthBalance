@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import PostUserRating from "./PostUserRating.js";
+import CommentUserRating from "./CommentUserRating.js";
 
 const CommentSchema = new mongoose.Schema({
     author: {
@@ -16,7 +18,24 @@ const CommentSchema = new mongoose.Schema({
         required: true
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: {virtuals: true},
+    toObject: {virtuals: true}
 });
+
+CommentSchema.virtual('rating', {
+    ref: CommentUserRating,
+    localField: '_id',
+    foreignField: 'comment',
+}).get(arr => {
+    return Array.isArray(arr) ? arr.reduce((sum, el) => sum + el.rating, 0) : 0
+})
+
+CommentSchema.virtual('userRating', {
+    ref: CommentUserRating,
+    localField: '_id',
+    foreignField: 'comment',
+    justOne: true
+}).get(el => el ? el.rating : 0);
 
 export default mongoose.model('Comment', CommentSchema);

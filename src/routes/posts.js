@@ -11,7 +11,7 @@ import {
     getPopularPosts,
     getPost,
     getRecommendationPosts,
-    setFavorites,
+    setFavorites, toggleCommentRating,
     toggleRating,
     updatePost
 } from '../controllers/PostController.js';
@@ -31,6 +31,7 @@ router.post('/', postCreateValidation, upload.single('image'), handleErrors, cre
 router.put('/:id', postCreateValidation, deletePostImage, upload.single('image'), handleErrors, updatePost);
 router.delete('/:id', deletePostImage, deletePost);
 
-router.post('/:id/comment', createComment)
+router.post('/:id/comment', createComment);
+router.put('/:id/comment-rating', toggleCommentRating);
 
 export default router;

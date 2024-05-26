@@ -1,5 +1,6 @@
 import Post from '../models/Post.js';
 import * as ERRORS from '../utils/errors.js';
+import {UNDEFINED_ERROR} from '../utils/errors.js';
 import PostUserFavorite from '../models/PostUserFavorite.js';
 import Comment from '../models/Comment.js';
 import {removeFile} from './FileController.js';
@@ -7,12 +8,12 @@ import PostUserRating from '../models/PostUserRating.js';
 import Tag from '../models/Tag.js';
 import {calculateOffsetAndLimit} from '../utils/helper.js';
 import Profile from "../models/Profile.js";
-import {UNDEFINED_ERROR} from "../utils/errors.js";
+import CommentUserRating from "../models/CommentUserRating.js";
 
 export const getAll = async (req, res) => {
     const userId = req.query['userId'];
 
-    const searchValue = req.query['searchValue'];
+    let searchValue = req.query['searchValue'];
     const tabIndex = +req.query['tabIndex'];
     const tags = req.query['tags'];
     const currentPage = req.query['currentPage'];
@@ -36,6 +37,7 @@ export const getAll = async (req, res) => {
     const where = [];
 
     if (searchValue) {
+        searchValue = searchValue.replaceAll(".", "\\.");
         where.push({
             $or: [
                 {title: {$regex: searchValue, $options: 'i'}},
@@ -240,13 +242,17 @@ export const getPost = async (req, res) => {
         })
         .populate({
             path: 'comments',
-            populate: {
-                path: 'author',
-                populate: {path: 'avatar'},
-            }
+            populate: [
+                {
+                    path: 'author',
+                    populate: {path: 'avatar'},
+                },
+                {path: 'rating'},
+                {path: 'userRating'}
+            ]
         })
         .populate('image')
-        .populate('likes')
+        .populate({path: 'likes', match: {'user': {$in: req.userId}}})
         .populate('rating')
         .populate({
             path: 'tags',
@@ -462,4 +468,23 @@ const mergeTags = (oldTags, newTags) => {
         forCreate,
         allIds
     }
+}
+
+export const toggleCommentRating = async (req, res) => {
+    const rating = req.query['rating'];
+    const commentId = req.params.id;
+
+
+    await CommentUserRating.findOneAndUpdate({
+            comment: commentId,
+            user: req.userId
+        },
+        {$set: {rating: rating}},
+        {upsert: true}
+    ).exec()
+        .then(() => {
+            res.json({
+                resultCode: 0
+            });
+        })
 }

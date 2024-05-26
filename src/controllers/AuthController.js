@@ -83,7 +83,12 @@ export const status = async (req, res) => {
 
         res.json({
             resultCode: 0,
-            data: profile
+            data: profile,
+            token: jwt.sign(
+                {_id: req.userId},
+                SECRET_KEY,
+                {expiresIn: EXPIRES_KEY}
+            )
         });
 
     } catch (err) {
