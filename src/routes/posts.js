@@ -11,7 +11,9 @@ import {
     getPopularPosts,
     getPost,
     getRecommendationPosts,
-    setFavorites, toggleCommentRating,
+    getUserPostComments,
+    setFavorites,
+    toggleCommentRating,
     toggleRating,
     updatePost
 } from '../controllers/PostController.js';
@@ -19,19 +21,18 @@ import upload from '../utils/gridFsStorage.js';
 
 const router = express.Router();
 
-router.use(checkAuth);
-
 router.get('/', getAll);
+router.get('/post-comments', getUserPostComments);
 router.put('/:id/like', setFavorites);
 router.put('/:id/rating', toggleRating);
 router.get('/popular', getPopularPosts);
 router.get('/recommendations', getRecommendationPosts);
 router.get('/:id', getPost);
-router.post('/', postCreateValidation, upload.single('image'), handleErrors, createPost);
-router.put('/:id', postCreateValidation, deletePostImage, upload.single('image'), handleErrors, updatePost);
-router.delete('/:id', deletePostImage, deletePost);
+router.post('/', checkAuth, postCreateValidation, upload.single('image'), handleErrors, createPost);
+router.put('/:id', checkAuth, postCreateValidation, deletePostImage, upload.single('image'), handleErrors, updatePost);
+router.delete('/:id', checkAuth, deletePostImage, deletePost);
 
-router.post('/:id/comment', createComment);
-router.put('/:id/comment-rating', toggleCommentRating);
+router.post('/:id/comment', checkAuth, createComment);
+router.put('/:id/comment-rating', checkAuth, toggleCommentRating);
 
 export default router;

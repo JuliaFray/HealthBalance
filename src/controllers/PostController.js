@@ -7,10 +7,12 @@ import {removeFile} from './FileController.js';
 import PostUserRating from '../models/PostUserRating.js';
 import Tag from '../models/Tag.js';
 import {calculateOffsetAndLimit} from '../utils/helper.js';
-import Profile from "../models/Profile.js";
-import CommentUserRating from "../models/CommentUserRating.js";
+import Profile from '../models/Profile.js';
+import CommentUserRating from '../models/CommentUserRating.js';
+import {getToken} from './FatSecretController.js';
 
 export const getAll = async (req, res) => {
+    await getToken();
     const userId = req.query['userId'];
 
     let searchValue = req.query['searchValue'];
@@ -21,23 +23,23 @@ export const getAll = async (req, res) => {
     const isMinePosts = !!req.query['isMinePosts'] && JSON.parse(req.query['isMinePosts']);
 
 
-    if (!userId) {
-        res.json({
-            resultCode: 1,
-            message: UNDEFINED_ERROR
-        });
-        return;
-    }
-
-    const profile = await Profile.findById(userId)
-        .populate('followers')
-        .exec();
+    // if (!userId) {
+    //     res.json({
+    //         resultCode: 1,
+    //         message: UNDEFINED_ERROR
+    //     });
+    //     return;
+    // }
+    //
+    // const profile = await Profile.findById(userId)
+    //     .populate('followers')
+    //     .exec();
 
 
     const where = [];
 
     if (searchValue) {
-        searchValue = searchValue.replaceAll(".", "\\.");
+        searchValue = searchValue.replaceAll('.', '\\.');
         where.push({
             $or: [
                 {title: {$regex: searchValue, $options: 'i'}},
@@ -54,8 +56,14 @@ export const getAll = async (req, res) => {
         where.push({author: {$in: userId}});
     }
 
-    if (tabIndex === 0) {
-        where.push({author: {$in: profile.followers}});
+    if (tabIndex === 0 && userId) {
+        const profile = await Profile.findById(userId)
+            .populate('followers')
+            .exec();
+
+        if (profile) {
+            where.push({author: {$in: profile.followers}});
+        }
     }
 
     let query = where.length ? {$and: [...where]} : {};
@@ -100,7 +108,7 @@ export const getAll = async (req, res) => {
         posts = posts.filter(it => !!it.likes);
     }
 
-    if (tabIndex === 2) {
+    if (userId && tabIndex === 2 || !userId && tabIndex === 1) {
         posts.sort((a, b) => {
             return b.rating - a.rating
         })
@@ -418,7 +426,7 @@ export const getPopularTags = async (req, res) => {
     const tags = await Tag
         .find()
         .sort('-useCount')
-        .limit(5)
+        .limit(10)
         .exec();
 
     res.json({
@@ -474,7 +482,6 @@ export const toggleCommentRating = async (req, res) => {
     const rating = req.query['rating'];
     const commentId = req.params.id;
 
-
     await CommentUserRating.findOneAndUpdate({
             comment: commentId,
             user: req.userId
@@ -484,6 +491,40 @@ export const toggleCommentRating = async (req, res) => {
     ).exec()
         .then(() => {
             res.json({
+                resultCode: 0
+            });
+        })
+}
+
+export const getUserPostComments = async (req, res) => {
+    const userId = req.query['userId'];
+
+    await Post.find()
+        .populate({
+            path: 'author',
+            populate: {path: 'avatar'},
+        })
+        .populate({
+            path: 'comments',
+            populate: [
+                {
+                    path: 'author',
+                    populate: {path: 'avatar'},
+                },
+                {path: 'rating'},
+                {path: 'userRating'}
+            ]
+        })
+        .exec()
+        .then(data => {
+            const finData = data;
+
+            finData.forEach(post => {
+                post.comments = post.comments.filter(com => com.author._id.toString() === userId);
+            });
+
+            res.json({
+                data: finData.filter(it => !!it.comments.length),
                 resultCode: 0
             });
         })

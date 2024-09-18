@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import PostUserRating from "./PostUserRating.js";
 import CommentUserRating from "./CommentUserRating.js";
 
 const CommentSchema = new mongoose.Schema({
