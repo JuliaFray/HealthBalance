@@ -34,8 +34,6 @@ export const enhanceHeaders = (req, res, next) => {
 
             req.userId = decoded._id;
             req.token = token;
-
-            next();
         } catch (err) {
             return res.status(403).json({
                 message: ACCESS_DENIED,
@@ -43,4 +41,5 @@ export const enhanceHeaders = (req, res, next) => {
             })
         }
     }
+    next();
 }
