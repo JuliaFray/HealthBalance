@@ -51,9 +51,9 @@ export const getAllUsers = async (req, res) => {
 };
 
 export const getProfile = async (req, res) => {
-    const my = await Profile.findOne({_id: {$in: req.userId}})
+    const my = req.userId ? await Profile.findOne({_id: {$in: req.userId}})
         .populate('followers')
-        .exec();
+        .exec() : null;
 
     const profile = await Profile
         .findById(req.params.id)
@@ -65,7 +65,7 @@ export const getProfile = async (req, res) => {
         .findById(req.params.id)
 
     const data = {
-        isFollowed: my.followers.map(f => f._id.toString()).includes(profile._id.toString()),
+        isFollowed: my ? my.followers.map(f => f._id.toString()).includes(profile._id.toString()) : false,
         avatar: profile.avatar,
         createdAt: user.createdAt,
         ...profile._doc

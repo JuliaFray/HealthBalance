@@ -60,7 +60,7 @@ function processReceivedMessage(message) {
             json.data = userActivity;
             break;
         case Events.LOGOUT_EVENT:
-            userActivity = userActivity.filter(it => it !== dataFromClient.id);
+            userActivity = userActivity.filter(it => it !== dataFromClient.id).filter(it => !!it);
             json.data = userActivity;
             break;
         case Events.MSG_EVENT:

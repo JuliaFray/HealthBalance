@@ -1,7 +1,7 @@
 import express from 'express';
 import {postCreateValidation} from '../utils/validation.js';
 import handleErrors from '../utils/handleErrors.js';
-import checkAuth from '../utils/checkAuth.js';
+import checkAuth, {enhanceHeaders} from '../utils/checkAuth.js';
 import {
     createComment,
     createPost,
@@ -20,6 +20,8 @@ import {
 import upload from '../utils/gridFsStorage.js';
 
 const router = express.Router();
+
+router.use(enhanceHeaders);
 
 router.get('/', getAll);
 router.get('/post-comments', getUserPostComments);
