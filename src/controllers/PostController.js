@@ -12,7 +12,7 @@ import CommentUserRating from '../models/CommentUserRating.js';
 import {getToken} from './FatSecretController.js';
 
 export const getAll = async (req, res) => {
-    await getToken();
+    // await getToken();
     const userId = req.query['userId'];
 
     let searchValue = req.query['searchValue'];

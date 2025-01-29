@@ -64,6 +64,7 @@ function processReceivedMessage(message) {
             json.data = userActivity;
             break;
         case Events.MSG_EVENT:
+
             saveMessage(dataFromClient.msg)
                 .then((data) => {
                     sendMsg(dataFromClient.msg.to, dataFromClient.type, data,

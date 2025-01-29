@@ -1,6 +1,6 @@
 {
   "name": "dmj",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "DMJ blog",
   "main": "www.js",
   "type": "module",

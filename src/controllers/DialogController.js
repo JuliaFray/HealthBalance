@@ -1,5 +1,5 @@
-import Dialog from "../models/Dialog.js";
-import Message from "../models/Message.js";
+import Dialog from '../models/Dialog.js';
+import Message from '../models/Message.js';
 
 export const getAllDialogs = async (req, res) => {
     const userId = req.userId;
@@ -10,12 +10,23 @@ export const getAllDialogs = async (req, res) => {
         {sort: {createdAt: -1}}
     )
         .populate({path: 'users', populate: {path: 'avatar'}})
+        .populate(
+            {
+                path: 'lastMsg', populate: [
+                    {path: 'from', populate: 'avatar'},
+                    {path: 'to', populate: 'avatar'}
+                ]
+            }
+        )
         .exec();
+
 
     res.json({
         resultCode: 0,
         data: dialogs
     });
+
+
 }
 
 export const getMessagesByDialog = async (req, res) => {
