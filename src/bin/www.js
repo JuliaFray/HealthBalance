@@ -37,7 +37,7 @@ wsServer.on('error', onError);
 
 function onError(error) {
     if (error.syscall !== 'listen') {
-        console.log(error);
+        // console.log(error);
         throw error;
     }
 

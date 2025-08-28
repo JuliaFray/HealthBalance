@@ -1,6 +1,5 @@
 import Post from '../models/Post.js';
 import * as ERRORS from '../utils/errors.js';
-import {UNDEFINED_ERROR} from '../utils/errors.js';
 import PostUserFavorite from '../models/PostUserFavorite.js';
 import Comment from '../models/Comment.js';
 import {removeFile} from './FileController.js';
@@ -9,7 +8,7 @@ import Tag from '../models/Tag.js';
 import {calculateOffsetAndLimit} from '../utils/helper.js';
 import Profile from '../models/Profile.js';
 import CommentUserRating from '../models/CommentUserRating.js';
-import {getToken} from './FatSecretController.js';
+import {reject} from 'bcrypt/promises.js';
 
 export const getAll = async (req, res) => {
     // await getToken();
@@ -209,6 +208,14 @@ export const getRecommendationPosts = async (req, res) => {
     }).exec()
         .then(post => {
 
+            if (!post) {
+                res.status(404).json({
+                    resultCode: 1,
+                    message: ERRORS.NOT_FOUND
+                })
+                return;
+            }
+
             return Post
                 .find({
                     $and: [
@@ -233,6 +240,9 @@ export const getRecommendationPosts = async (req, res) => {
                 data: posts,
                 resultCode: 0
             })
+        })
+        .catch(err => {
+            console.log(err)
         })
 }
 
@@ -276,6 +286,7 @@ export const getPost = async (req, res) => {
                     error: ERRORS.NOT_FOUND,
                     resultCode: 1,
                 })
+                return;
             }
             res.json({
                 data: post,

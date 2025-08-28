@@ -64,6 +64,14 @@ export const getProfile = async (req, res) => {
     const user = await User
         .findById(req.params.id)
 
+    if (!profile) {
+        res.status(404).json({
+            resultCode: 1,
+            error: ERRORS.NOT_FOUND
+        })
+        return;
+    }
+
     const data = {
         isFollowed: my ? my.followers.map(f => f._id.toString()).includes(profile._id.toString()) : false,
         avatar: profile.avatar,
@@ -71,17 +79,10 @@ export const getProfile = async (req, res) => {
         ...profile._doc
     }
 
-    if (profile) {
-        res.json({
-            resultCode: 0,
-            data: data
-        })
-    } else {
-        res.status(404).json({
-            resultCode: 1,
-            error: ERRORS.NOT_FOUND
-        })
-    }
+    res.json({
+        resultCode: 0,
+        data: data
+    })
 }
 
 export const getProfileStats = async (req, res) => {
@@ -110,9 +111,9 @@ export const getProfileStats = async (req, res) => {
     res.json({
         resultCode: 0,
         data: {
-            posts: posts.length,
-            favorites: req.userId === req.params.id ? favorites.filter(it => it.likes).length : undefined,
-            followers: followers.followers.length,
+            posts: posts?.length,
+            favorites: req.userId === req.params.id ? favorites?.filter(it => it.likes).length : undefined,
+            followers: followers?.followers.length,
             rating: posts.reduce((sum, el) => sum + el.rating, 0) || 0,
             marks: req.userId === req.params.id ? marks.filter(it => it.rating).length || 0 : undefined,
             comments: comments.length || 0
