@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import PostUserFavorite from "./PostUserFavorite.js";
 import Comment from "./Comment.js";
 import File from './File.js'
-import Profile from "./Profile.js";
 import PostUserRating from "./PostUserRating.js";
 import Tag from "./Tag.js";
 
@@ -25,7 +24,7 @@ const PostSchema = new mongoose.Schema({
     },
     author: {
         type: mongoose.Schema.ObjectId,
-        ref: Profile,
+        ref: 'Profile',
         required: true
     },
     viewsCount: {

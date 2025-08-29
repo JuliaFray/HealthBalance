@@ -1,6 +1,8 @@
 import mongoose from 'mongoose';
 import File from "./File.js";
 import ProfileFriends from "./ProfileFriends.js";
+import Post from "./Post.js";
+import PostSchema from "./Post.js";
 
 const ProfileSchema = new mongoose.Schema({
     firstName: {
@@ -53,6 +55,13 @@ ProfileSchema.virtual('friends', {
     foreignField: 'from',
 }).get(arr => {
     return Array.isArray(arr) ? arr.filter(val => val.isAgree) : []
+})
+
+ProfileSchema.virtual('postCount', {
+    ref: Post,
+    localField: '_id',
+    foreignField: 'author',
+    count: true
 })
 
 export default mongoose.model('Profile', ProfileSchema);

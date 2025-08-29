@@ -8,7 +8,6 @@ import Tag from '../models/Tag.js';
 import {calculateOffsetAndLimit} from '../utils/helper.js';
 import Profile from '../models/Profile.js';
 import CommentUserRating from '../models/CommentUserRating.js';
-import {reject} from 'bcrypt/promises.js';
 
 export const getAll = async (req, res) => {
     // await getToken();
@@ -17,6 +16,7 @@ export const getAll = async (req, res) => {
     let searchValue = req.query['searchValue'];
     const tabIndex = +req.query['tabIndex'];
     const tags = req.query['tags'];
+    const authors = req.query['authors'];
     const currentPage = req.query['currentPage'];
     const isFavoritePosts = !!req.query['isFavoritePosts'] && JSON.parse(req.query['isFavoritePosts']);
     const isMinePosts = !!req.query['isMinePosts'] && JSON.parse(req.query['isMinePosts']);
@@ -47,8 +47,12 @@ export const getAll = async (req, res) => {
         });
     }
 
-    if (tags) {
-        where.push({tags: {$in: tags}});
+    if (tags && JSON.parse(tags)) {
+        where.push( {tags: {$in: JSON.parse(tags)}})
+    }
+
+    if (authors && JSON.parse(authors)) {
+        where.push({author: {$in: JSON.parse(authors)}})
     }
 
     if (isMinePosts && !isFavoritePosts) {
@@ -444,6 +448,32 @@ export const getPopularTags = async (req, res) => {
     res.json({
         resultCode: 0,
         data: tags
+    })
+};
+
+export const getPopularAuthors = async (req, res) => {
+    const authors = await Profile
+        .find()
+        .populate('postCount')
+        .limit(10)
+        .select(['_id', 'firstName', 'secondName', 'postCount'])
+        .sort('postCount')
+        .exec();
+
+    // let posts = await Post
+    //     .find({author: {$in: authors.map(author => author._id)}})
+    //     .populate('rating')
+    //     .sort('-rating')
+    //     .exec();
+
+
+    res.json({
+        resultCode: 0,
+        data: authors.map(author => ({
+            _id: author._id,
+            value: `${author.firstName} ${author.secondName}`,
+            useCount: author.postCount
+        })).filter(author => author.useCount > 0)
     })
 };
 
