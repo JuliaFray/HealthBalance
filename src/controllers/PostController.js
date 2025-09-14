@@ -48,7 +48,7 @@ export const getAll = async (req, res) => {
     }
 
     if (tags && JSON.parse(tags)) {
-        where.push( {tags: {$in: JSON.parse(tags)}})
+        JSON.parse(tags).forEach(tag => where.push( {tags: {$in:tag}}))
     }
 
     if (authors && JSON.parse(authors)) {
