@@ -3,29 +3,23 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import * as ERRORS from '../utils/errors.js';
 import {EXPIRES_KEY, SECRET_KEY} from '../utils/constants.js';
-import Profile from '../models/Profile.js';
 import asyncErrorHandler from '../utils/asyncErrorHandler.js';
+import {UNDEFINED_ERROR} from "../utils/errors.js";
 
 export const register = asyncErrorHandler(async (req, res) => {
     await new User({
         email: req.body.email,
-        passwordHash: await bcrypt.hash(req.body.password, await bcrypt.genSalt(10))
+        passwordHash: await bcrypt.hash(req.body.password, await bcrypt.genSalt(10)),
+        login: req.body.login
     }).save()
-        .then(resUser => new Profile({
-                _id: resUser._id,
-                firstName: req.body.firstName,
-                secondName: req.body.secondName,
-                lastName: req.body.lastName
-            }).save()
-        )
-        .then(resProfile => {
+        .then(user => {
             const token = jwt.sign(
-                {_id: resProfile._id},
+                {_id: user._id},
                 SECRET_KEY,
                 {expiresIn: EXPIRES_KEY}
             );
 
-            const {passwordHash, ...userData} = resProfile._doc;
+            const {passwordHash, ...userData} = user._doc;
 
             res.json({
                 resultCode: 0,
@@ -36,7 +30,7 @@ export const register = asyncErrorHandler(async (req, res) => {
 });
 
 export const login = async (req, res) => {
-    User.findOne({email: req.body.email}).exec()
+    User.findOne({email: req.body.email}).populate('avatar').exec()
         .then(user => {
             if (!user) {
                 return res.status(404).json({
@@ -44,35 +38,39 @@ export const login = async (req, res) => {
                     message: ERRORS.NOT_FOUND_USER
                 })
             }
-            const isValidPass = bcrypt.compare(req.body.password, user._doc.passwordHash);
-            if (!isValidPass) {
-                return res.status(400).json({
-                    resultCode: 1,
-                    message: ERRORS.WRONG_LOGIN_PASS
-                })
-            }
-            return Profile.findById(user._id).populate('avatar');
-        })
-        .then(profile => {
-            const token = jwt.sign(
-                {_id: profile._id},
-                SECRET_KEY,
-                {expiresIn: EXPIRES_KEY}
-            );
 
-            res.json({
-                resultCode: 0,
-                data: profile,
-                token: token
+            bcrypt.compare(req.body.password, user._doc.passwordHash, (err, result) => {
+                if (err) {
+                    return res.status(400).json({
+                        resultCode: 1,
+                        message: ERRORS.UNDEFINED_ERROR
+                    })
+                }
+                if (result) {
+                    const token = jwt.sign(
+                        {_id: user._id},
+                        SECRET_KEY,
+                        {expiresIn: EXPIRES_KEY}
+                    );
+
+                    return res.json({
+                        resultCode: 0,
+                        data: user,
+                        token: token
+                    });
+                } else {
+                    return res.status(400).json({
+                        resultCode: 1,
+                        message: ERRORS.WRONG_LOGIN_PASS
+                    })
+                }
             });
         });
-
 };
 
 export const status = async (req, res) => {
     try {
-        const profile = await Profile.findById(req.userId).populate('avatar');
-        const user = await User.findById(req.userId);
+        const user = await User.findById(req.userId).populate('avatar');
 
         if (!user) {
             return res.status(404).json({
@@ -83,13 +81,14 @@ export const status = async (req, res) => {
 
         res.json({
             resultCode: 0,
-            data: profile,
+            data: user,
             token: jwt.sign(
                 {_id: req.userId},
                 SECRET_KEY,
                 {expiresIn: EXPIRES_KEY}
             )
         });
+
 
     } catch (err) {
         console.error(err);

@@ -4,7 +4,7 @@ import CommentUserRating from "./CommentUserRating.js";
 const CommentSchema = new mongoose.Schema({
     author: {
         type: mongoose.Schema.ObjectId,
-        ref: 'Profile',
+        ref: 'User',
         required: true
     },
     post: {

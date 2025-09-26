@@ -24,7 +24,7 @@ const PostSchema = new mongoose.Schema({
     },
     author: {
         type: mongoose.Schema.ObjectId,
-        ref: 'Profile',
+        ref: 'User',
         required: true
     },
     viewsCount: {

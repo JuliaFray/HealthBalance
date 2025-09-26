@@ -70,7 +70,7 @@ function processReceivedMessage(message) {
                     sendMsg(dataFromClient.msg.to, dataFromClient.type, data,
                         {
                             fromId: dataFromClient.msg.from,
-                            from: `${data.from.firstName} ${data.from.secondName}`,
+                            from: `${data.from.login}`,
                             msg: `Пользователь %s отправил Вам сообщение!`,
                             type: EventsType.MSG
                         });

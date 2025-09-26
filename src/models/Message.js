@@ -3,11 +3,11 @@ import mongoose from 'mongoose';
 const Message = new mongoose.Schema({
     from: {
         type: mongoose.Schema.ObjectId,
-        ref: 'Profile',
+        ref: 'User',
     },
     to: {
         type: mongoose.Schema.ObjectId,
-        ref: 'Profile',
+        ref: 'User',
     },
     text: String,
     dialog: {

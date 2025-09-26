@@ -8,8 +8,7 @@ export const loginValidation = [
 export const registerValidation = [
     body('email', 'Неверный формат почты').isEmail(),
     body('password', 'Пароль должен быть не менее 5 и не более 20  символов').isLength({min: 5, max: 20}),
-    body('firstName', 'Имя должно быть не более 20 символов').isLength({max: 20}),
-    body('secondName', 'Фамилия должна быть не более 20 символов').isLength({max: 20}),
+    body('login', 'Имя должно быть не более 30 символов').isLength({max: 30}),
 ];
 
 export const postCreateValidation = [

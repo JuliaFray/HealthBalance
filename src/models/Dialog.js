@@ -4,7 +4,7 @@ import Message from './Message.js';
 const Dialog = new mongoose.Schema({
     users: {
         type: [mongoose.Schema.ObjectId],
-        ref: 'Profile',
+        ref: 'User',
     },
     name: {
         type: String,

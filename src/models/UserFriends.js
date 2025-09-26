@@ -1,18 +1,21 @@
-import mongoose from "mongoose";
-import Profile from "./Profile.js";
+import mongoose from 'mongoose';
 
-const FriendsSchema = new mongoose.Schema({
-    user: {
+const UserFriends = new mongoose.Schema({
+    from: {
         type: mongoose.Schema.ObjectId,
-        ref: Profile,
-        required: true
+        ref: 'User',
     },
-    friends: [
-        {
-            type: mongoose.Schema.ObjectId,
-            ref: Profile
-        }
-    ]
-})
+    to: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+    },
+    isAgree: {
+        type: Boolean,
+        required: true,
+        default: false
+    },
+}, {
+    timestamps: true
+});
 
-export default mongoose.model('Friends', FriendsSchema)
+export default mongoose.model('UserFriends', UserFriends);

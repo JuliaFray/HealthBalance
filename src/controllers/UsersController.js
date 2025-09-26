@@ -1,12 +1,11 @@
 import * as ERRORS from '../utils/errors.js';
-import Profile from '../models/Profile.js';
 import Comment from '../models/Comment.js';
 import PostUserRating from '../models/PostUserRating.js';
 import {removeFile} from './FileController.js';
 import Post from '../models/Post.js';
 import {Events, EventsType, sendMsg} from "../configs/ws.js";
 import {calculateOffsetAndLimit} from "../utils/helper.js";
-import ProfileFriends from "../models/ProfileFriends.js";
+import UserFriends from "../models/UserFriends.js";
 import User from "../models/User.js";
 
 export const getAllUsers = async (req, res) => {
@@ -15,16 +14,16 @@ export const getAllUsers = async (req, res) => {
     const isFollowers = req.query['isFollowers'];
     const userId = req.query['userId'];
 
-    const profile = await Profile.findOne({_id: {$in: userId || req.userId}})
+    const profile = await User.findOne({_id: {$in: userId || req.userId}})
         .populate('followers')
         .exec();
 
-    let count = await Profile.countDocuments({_id: {$not: {$in: userId || req.userId}}});
+    let count = await User.countDocuments({_id: {$not: {$in: userId || req.userId}}});
     let offsetAndLimit = calculateOffsetAndLimit(currentPage);
 
     let where = {_id: {$not: {$in: userId || req.userId}}};
 
-    let users = await Profile.find(where)
+    let users = await User.find(where)
         .populate('avatar')
         .populate('followers')
         .skip(offsetAndLimit.offset)
@@ -51,20 +50,12 @@ export const getAllUsers = async (req, res) => {
 };
 
 export const getProfile = async (req, res) => {
-    const my = req.userId ? await Profile.findOne({_id: {$in: req.userId}})
+    const my = req.userId ? await User.findOne({_id: {$in: req.userId}})
         .populate('followers')
+        .populate('avatar')
         .exec() : null;
 
-    const profile = await Profile
-        .findById(req.params.id)
-        .populate('avatar')
-        .exec();
-
-
-    const user = await User
-        .findById(req.params.id)
-
-    if (!profile) {
+    if (!my) {
         res.status(404).json({
             resultCode: 1,
             error: ERRORS.NOT_FOUND
@@ -73,10 +64,10 @@ export const getProfile = async (req, res) => {
     }
 
     const data = {
-        isFollowed: my ? my.followers.map(f => f._id.toString()).includes(profile._id.toString()) : false,
-        avatar: profile.avatar,
-        createdAt: user.createdAt,
-        ...profile._doc
+        isFollowed: my.followers.map(f => f._id.toString()).includes(my._id.toString()),
+        avatar: my.avatar,
+        createdAt: my.createdAt,
+        ...my._doc
     }
 
     res.json({
@@ -106,7 +97,7 @@ export const getProfileStats = async (req, res) => {
         .find({user: {$in: req.params.id}})
         .exec();
 
-    let followers = await Profile.findById(req.params.id).populate('followers').exec();
+    let followers = await User.findById(req.params.id).populate('followers').exec();
 
     res.json({
         resultCode: 0,
@@ -125,13 +116,11 @@ export const updateProfile = async (req, res) => {
     const userId = req.params.id;
     const file = req.file;
 
-    const profile = await Profile.findOneAndUpdate(
+    const profile = await User.findOneAndUpdate(
         {_id: userId},
         {
-            firstName: req.body.firstName,
-            secondName: req.body.secondName,
-            lastName: req.body.lastName,
-            age: req.body.age,
+            login: req.body.login,
+            birthDate: req.body.birthDate,
             city: req.body.city,
             description: req.body.description,
             avatarId: file?.id
@@ -159,7 +148,7 @@ export const toggleFollow = async (req, res) => {
         query = {$pull: {followers: friendId}}
     }
 
-    const profile = await Profile.findOneAndUpdate({_id: userId}, query,).exec();
+    const profile = await User.findOneAndUpdate({_id: userId}, query,).exec();
 
     if (JSON.parse(isFollow)) {
         sendMsg(
@@ -168,7 +157,7 @@ export const toggleFollow = async (req, res) => {
             null,
             {
                 fromId: userId,
-                from: `${profile.firstName} ${profile.secondName}`,
+                from: `${profile.login} `,
                 msg: `Пользователь %s теперь подписан на Вас!`,
                 type: EventsType.FOLLOW
             }
@@ -186,12 +175,12 @@ export const createFriendLink = async (req, res) => {
     const isAddFriend = req.query['isAddFriend'];
 
 
-    await ProfileFriends.findOneAndUpdate(
+    await UserFriends.findOneAndUpdate(
         {from: userId, to: friendId},
         {$set: {isAgree: false}},
         {upsert: true}
     ).exec()
-        .then(() => Profile.findOne({_id: userId}).exec())
+        .then(() => User.findOne({_id: userId}).exec())
         .then(profile => {
             if (JSON.parse(isAddFriend)) {
                 sendMsg(
@@ -200,7 +189,7 @@ export const createFriendLink = async (req, res) => {
                     null,
                     {
                         fromId: userId,
-                        from: `${profile.firstName} ${profile.secondName}`,
+                        from: `${profile.login} `,
                         msg: `Пользователь %s хочет добавить Вас в друзья!`,
                         type: EventsType.FRIEND
                     });
@@ -218,7 +207,7 @@ export const toggleFriend = async (req, res) => {
     const isAgree = req.query['isAgree'];
 
     if (isAgree && JSON.parse(isAgree)) {
-        await ProfileFriends.findOneAndUpdate(
+        await UserFriends.findOneAndUpdate(
             {from: fromId, to: userId},
             {$set: {isAgree: true}},
             {upsert: true}
@@ -229,7 +218,7 @@ export const toggleFriend = async (req, res) => {
                 });
             });
     } else {
-        await ProfileFriends.deleteOne(
+        await UserFriends.deleteOne(
             {from: fromId, to: userId}
         ).exec()
             .then(() => {
@@ -244,7 +233,7 @@ export const deleteUserImage = async (req, res, next) => {
     const userId = req.params.id;
     const file = req.file;
 
-    const profile = await Profile.findOne({_id: userId})
+    const profile = await User.findOne({_id: userId})
         .populate('avatar').exec();
 
     if (!!profile?.avatarId && (!file || profile.avatarId !== file.id)) {
@@ -254,7 +243,7 @@ export const deleteUserImage = async (req, res, next) => {
 }
 
 export const getFriendNotifications = async (req, res) => {
-    await ProfileFriends.find({
+    await UserFriends.find({
         $and: [
             {isAgree: false},
             {to: {$in: req.params.id}}
@@ -270,7 +259,7 @@ export const getFriendNotifications = async (req, res) => {
                     null,
                     {
                         fromId: ntf.from._id,
-                        from: `${ntf.from.firstName} ${ntf.from.secondName}`,
+                        from: `${ntf.from.login} `,
                         msg: `Пользователь %s хочет добавить Вас в друзья!`,
                         type: EventsType.FRIEND
                     });

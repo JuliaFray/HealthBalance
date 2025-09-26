@@ -6,11 +6,10 @@ import {removeFile} from './FileController.js';
 import PostUserRating from '../models/PostUserRating.js';
 import Tag from '../models/Tag.js';
 import {calculateOffsetAndLimit} from '../utils/helper.js';
-import Profile from '../models/Profile.js';
 import CommentUserRating from '../models/CommentUserRating.js';
+import User from "../models/User.js";
 
 export const getAll = async (req, res) => {
-    // await getToken();
     const userId = req.query['userId'];
 
     let searchValue = req.query['searchValue'];
@@ -20,20 +19,6 @@ export const getAll = async (req, res) => {
     const currentPage = req.query['currentPage'];
     const isFavoritePosts = !!req.query['isFavoritePosts'] && JSON.parse(req.query['isFavoritePosts']);
     const isMinePosts = !!req.query['isMinePosts'] && JSON.parse(req.query['isMinePosts']);
-
-
-    // if (!userId) {
-    //     res.json({
-    //         resultCode: 1,
-    //         message: UNDEFINED_ERROR
-    //     });
-    //     return;
-    // }
-    //
-    // const profile = await Profile.findById(userId)
-    //     .populate('followers')
-    //     .exec();
-
 
     const where = [];
 
@@ -48,7 +33,7 @@ export const getAll = async (req, res) => {
     }
 
     if (tags && JSON.parse(tags)) {
-        JSON.parse(tags).forEach(tag => where.push( {tags: {$in:tag}}))
+        JSON.parse(tags).forEach(tag => where.push({tags: {$in: tag}}))
     }
 
     if (authors && JSON.parse(authors)) {
@@ -60,7 +45,7 @@ export const getAll = async (req, res) => {
     }
 
     if (tabIndex === 0 && userId) {
-        const profile = await Profile.findById(userId)
+        const profile = await User.findById(userId)
             .populate('followers')
             .exec();
 
@@ -441,37 +426,32 @@ export const getPopularTags = async (req, res) => {
     const tags = await Tag
         .find()
         .sort('-useCount')
-        .limit(10)
+        .limit(4)
         .exec();
 
 
     res.json({
         resultCode: 0,
-        data: tags
+        data: tags.filter(tag => tag.useCount > 0)
     })
 };
 
+
 export const getPopularAuthors = async (req, res) => {
-    const authors = await Profile
+    const authors = await User
         .find()
         .populate('postCount')
-        .limit(10)
-        .select(['_id', 'firstName', 'secondName', 'postCount'])
+        .limit(4)
+        .select(['_id', 'login', 'postCount'])
         .sort('postCount')
         .exec();
-
-    // let posts = await Post
-    //     .find({author: {$in: authors.map(author => author._id)}})
-    //     .populate('rating')
-    //     .sort('-rating')
-    //     .exec();
 
 
     res.json({
         resultCode: 0,
         data: authors.map(author => ({
             _id: author._id,
-            value: `${author.firstName} ${author.secondName}`,
+            value: author.login,
             useCount: author.postCount
         })).filter(author => author.useCount > 0)
     })
