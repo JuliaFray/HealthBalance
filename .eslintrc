@@ -1,0 +1,67 @@
+{
+  "env": {
+    "node": true,
+    "es6": true
+  },
+  "root": true,
+  "extends": [
+    "eslint:recommended"
+  ],
+  "globals": {
+    "LOGGER": true
+  },
+  "plugins": ["import"],
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js"],
+        "path": ["src/*"]
+      }
+    }
+  },
+  "rules": {
+    "import/no-unresolved": "error",
+    "indent": [
+      "error",
+      2
+    ],
+    "quotes": [
+      "error",
+      "single"
+    ],
+    "no-unused-vars": [
+      "warn",
+      {
+        "vars": "local",
+        "args": "none"
+      }
+    ],
+    "import/order": [
+      "warn",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index"
+        ],
+        "pathGroupsExcludedImportTypes": [
+          "builtin"
+        ],
+        "newlines-between": "always",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": false
+        },
+        "warnOnUnassignedImports": true
+      }
+    ]
+  }
+}

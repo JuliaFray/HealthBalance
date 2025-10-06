@@ -30,6 +30,7 @@ export const register = asyncErrorHandler(async (req, res) => {
 });
 
 export const login = async (req, res) => {
+    console.log(req)
     User.findOne({email: req.body.email}).populate('avatar').exec()
         .then(user => {
             if (!user) {

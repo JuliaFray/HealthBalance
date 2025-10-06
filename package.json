@@ -31,5 +31,30 @@
     "request": "^2.88.2",
     "uuid": "^9.0.1",
     "ws": "^8.16.0"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ]
+  },
+  "nodemonConfig": {
+    "watch": [
+      "src/*",
+      "public/*"
+    ],
+    "ignore": [
+      "**/__tests__/**",
+      "*.test.js",
+      "*.spec.js"
+    ]
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.16.8",
+    "@babel/eslint-parser": "^7.16.5",
+    "@eslint/js": "^8.57.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "eslint": "8.22.0",
+    "prettier": "3.5.3"
   }
 }
