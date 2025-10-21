@@ -18,7 +18,7 @@ const DietPlanSchema = new mongoose.Schema({
     type: [String],
     required: true,
   },
-  stats: {
+  stat: {
     plan: {
       cal: {
         type: Number,
@@ -76,7 +76,6 @@ const DietPlanSchema = new mongoose.Schema({
       carb: Number,
       otherNutrients: Object,
     },
-
   }],
 }, {
   timestamps: true,

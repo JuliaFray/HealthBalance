@@ -1,23 +1,24 @@
 import express from 'express';
-import {postCreateValidation} from '../utils/validation.js';
-import handleErrors from '../utils/handleErrors.js';
-import checkAuth, {enhanceHeaders} from '../utils/checkAuth.js';
+
 import {
-    createComment,
-    createPost,
-    deletePost,
-    deletePostImage,
-    getAll,
-    getPopularPosts,
-    getPost,
-    getRecommendationPosts,
-    getUserPostComments,
-    setFavorites,
-    toggleCommentRating,
-    toggleRating,
-    updatePost
+  createComment,
+  createPost,
+  deletePost,
+  deletePostImage,
+  getAll,
+  getPopularPosts,
+  getPost,
+  getRecommendationPosts,
+  getUserPostComments,
+  setFavorites,
+  toggleCommentRating,
+  toggleRating,
+  updatePost,
 } from '../controllers/PostController.js';
+import checkAuth, { enhanceHeaders } from '../utils/checkAuth.js';
 import upload from '../utils/gridFsStorage.js';
+import handleErrors from '../utils/handleErrors.js';
+import { postCreateValidation } from '../utils/validation.js';
 
 const router = express.Router();
 
