@@ -19,41 +19,21 @@ const DietPlanSchema = new mongoose.Schema({
     required: true,
   },
   stat: {
-    plan: {
-      cal: {
-        type: Number,
-        required: true,
-      },
-      proteins: {
-        type: Number,
-        required: true,
-      },
-      fats: {
-        type: Number,
-        required: true,
-      },
-      carb: {
-        type: Number,
-        required: true,
-      },
+    cal: {
+      type: Number,
+      required: true,
     },
-    fact: {
-      cal: {
-        type: Number,
-        required: true,
-      },
-      proteins: {
-        type: Number,
-        required: true,
-      },
-      fats: {
-        type: Number,
-        required: true,
-      },
-      carb: {
-        type: Number,
-        required: true,
-      },
+    proteins: {
+      type: Number,
+      required: true,
+    },
+    fats: {
+      type: Number,
+      required: true,
+    },
+    carb: {
+      type: Number,
+      required: true,
     },
     rating: {
       type: Number,

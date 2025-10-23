@@ -9,7 +9,7 @@ export const getAllDiets = async (req, res) => {
     {},
     { sort: { createdAt: -1 } },
   )
-    .populate({ path: 'author' })
+    .populate({ path: 'author', select: ['_id'], populate: { path: 'healthInfo' } })
     .exec();
 
   res.json({
@@ -193,7 +193,7 @@ export const updateWeight = async (req, res) => {
   const meal = req.meal;
   const newVal = req.newVal;
 
-  const updated = await DietPlan.findByIdAndUpdate(
+  return await DietPlan.findByIdAndUpdate(
     dietPlanId,
     {
       $set: {
@@ -212,8 +212,6 @@ export const updateWeight = async (req, res) => {
   )
     .populate({ path: 'author', select: ['_id'], populate: { path: 'healthInfo' } })
     .exec();
-
-  return updated;
 };
 
 
