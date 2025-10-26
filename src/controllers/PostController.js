@@ -45,7 +45,7 @@ export const getAll = async (req, res) => {
     where.push({ author: { $in: userId } });
   }
 
-  if (tabIndex === 0 && userId) {
+  if (tabIndex === 2 && userId) {
     const profile = await User.findById(userId)
       .populate('followers')
       .exec();
@@ -97,7 +97,7 @@ export const getAll = async (req, res) => {
     posts = posts.filter(it => !!it.likes);
   }
 
-  if (userId && tabIndex === 2 || !userId && tabIndex === 1) {
+  if (userId && tabIndex === 1 || !userId && tabIndex === 0) {
     posts.sort((a, b) => {
       return b.rating - a.rating;
     });

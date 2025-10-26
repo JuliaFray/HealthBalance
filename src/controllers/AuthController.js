@@ -233,7 +233,7 @@ const createTokenAndSendMail = (user, toEmail, res) => {
 				<span>Чтобы подтвердить Ваш аккаунт, нажмите на кнопку ниже.</span>
 			</div>
 			<div style='align-self: center; font-family: Inter; font-weight: 700; font-style: normal; text-align: center; text-decoration: none; font-size: 15px; line-height: 40px; color: rgb(255, 255, 255); background-color: rgb(46, 149, 140); margin-top: 40px; margin-bottom: 0px; padding: 0px; letter-spacing: -0.5px; word-spacing: 0px; direction: ltr; width: 100%; border-radius: 8px;'>
-				<span><a style='text-decoration: none; color: #fff' href='http://localhost:3000/confirm/${toEmail}/${t.token}'>Подтвердить email</a></span>
+				<span><a style='text-decoration: none; color: #fff' href='${process.env.FRONTEND_URL}/confirm/${toEmail}/${t.token}'>Подтвердить email</a></span>
 			</div>
 			<div style='align-self: center; margin-top: 40px; margin-bottom: 0px; font-family: Inter; font-weight: 500; font-style: normal; color: rgb(66, 64, 64); font-size: 14px; letter-spacing: -0.6px; word-spacing: 0px; line-height: 22px; text-align: center; text-transform: none; text-decoration: none; direction: ltr; width: 100%;'>
 				<span>Вы получили это письмо, потому что у Вас есть учетная запись в HEALTHBALANCE. Если Вы не уверены, почему Вы его получили, свяжитесь с нами, ответив на это письмо.</span>

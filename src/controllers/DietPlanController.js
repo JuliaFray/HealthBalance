@@ -37,12 +37,12 @@ export const getOneDiet = async (req, res) => {
         resultCode: 0,
       });
     }).catch(err => {
-      console.error(err);
-      res.status(400).json({
-        error: ERRORS.UNDEFINED_ERROR,
-        resultCode: 1,
-      });
+    console.error(err);
+    res.status(400).json({
+      error: ERRORS.UNDEFINED_ERROR,
+      resultCode: 1,
     });
+  });
 };
 
 export const createPlan = async (req, res) => {
@@ -82,7 +82,7 @@ const recalcFood = async (diet, updateBody) => {
 
       return food;
     }).filter(food => !!food.days.length);
-  } 
+  }
   diet.foods = diet.foods.map(food => {
     food.days = food.days.map(day => {
       if (day.meals.every(meal => meal.volume === 0)) {
@@ -192,6 +192,13 @@ export const updateWeight = async (req, res) => {
   const currentDay = req.currentDay;
   const meal = req.meal;
   const newVal = req.newVal;
+  const dayRating = req.stat;
+
+  let commonRating = 0;
+
+  if (dayRating) {
+    commonRating = dayRating.reduce((acc, curr) => acc + curr.rating, 0) / dayRating.length;
+  }
 
   return await DietPlan.findByIdAndUpdate(
     dietPlanId,
@@ -199,6 +206,7 @@ export const updateWeight = async (req, res) => {
       $set: {
         'foods.$[foodIdx].days.$[dayIdx].meals.$[mealIdx].volume': Number(newVal),
         'foods.$[foodIdx].days.$[dayIdx].meals.$[mealIdx].meal': meal,
+        'stat.rating': commonRating,
       },
     },
     {
