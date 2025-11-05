@@ -16,6 +16,7 @@ import indexRouter from './src/routes/index.js';
 import postsRouter from './src/routes/posts.js';
 import profileRouter from './src/routes/profile.js';
 import usersRouter from './src/routes/users.js';
+import diaryRouter from './src/routes/diary.js';
 import globalErrorHandler from './src/utils/handleErrors.js'
 
 const __dirname = path.resolve(path.dirname(''));
@@ -38,6 +39,7 @@ app.use('/dialog', dialogRouter);
 app.use('/diet', dietRouter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/food', foodRouter);
+app.use('/diary', diaryRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
