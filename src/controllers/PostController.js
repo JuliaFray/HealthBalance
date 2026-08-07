@@ -38,11 +38,11 @@ export const getAll = async (req, res) => {
   }
 
   if (authors && JSON.parse(authors)) {
-    where.push({ author: { $in: JSON.parse(authors) } });
+    where.push({ userId: { $in: JSON.parse(authors) } });
   }
 
   if (isMinePosts && !isFavoritePosts) {
-    where.push({ author: { $in: userId } });
+    where.push({ userId: { $in: userId } });
   }
 
   if (tabIndex === 2 && userId) {
@@ -51,7 +51,7 @@ export const getAll = async (req, res) => {
       .exec();
 
     if (profile) {
-      where.push({ author: { $in: profile.followers } });
+      where.push({ userId: { $in: profile.followers } });
     }
   }
 
@@ -64,27 +64,27 @@ export const getAll = async (req, res) => {
 
   if (isFavoritePosts) {
     posts = await Post.find(query, {}, { sort: { createdAt: -1 } })
-      .select(['-__v', '-updatedAt', '-author.__v'])
+      .select(['-__v', '-updatedAt', '-userId.__v'])
       .populate('comments')
-      .populate({ path: 'likes', match: { 'user': { $in: req.userId } } })
+      .populate({ path: 'likes', match: { 'userId': { $in: req.userId } } })
       .populate({ path: 'rating' })
-      .populate({ path: 'userRating', match: { 'user': { $in: req.userId } } })
+      .populate({ path: 'userRating', match: { 'userId': { $in: req.userId } } })
       .populate({ path: 'tags', select: ['_id', 'value'] })
       .populate({
-        path: 'author', populate: { path: 'avatar' },
+        path: 'userId', populate: { path: 'avatar' },
         select: (['-__v', '-age', '-city', '-status', '-contacts']),
       })
       .exec();
   } else {
     posts = await Post.find(query, {}, { sort: { createdAt: -1 } })
-      .select(['-__v', '-updatedAt', '-author.__v'])
+      .select(['-__v', '-updatedAt', '-userId.__v'])
       .populate('comments')
-      .populate({ path: 'likes', match: { 'user': { $in: req.userId } } })
+      .populate({ path: 'likes', match: { 'userId': { $in: req.userId } } })
       .populate({ path: 'rating' })
-      .populate({ path: 'userRating', match: { 'user': { $in: req.userId } } })
+      .populate({ path: 'userRating', match: { 'userId': { $in: req.userId } } })
       .populate({ path: 'tags', select: ['_id', 'value'] })
       .populate({
-        path: 'author', populate: { path: 'avatar' },
+        path: 'userId', populate: { path: 'avatar' },
         select: (['-__v', '-age', '-city', '-status', '-contacts']),
       })
       .limit(offsetAndLimit.limit)
@@ -111,7 +111,7 @@ export const getAll = async (req, res) => {
 };
 
 export const setFavorites = async (req, res) => {
-  await PostUserFavorite.findOneAndDelete({ post: req.params.id, user: req.userId })
+  await PostUserFavorite.findOneAndDelete({ postId: req.params.id, userId: req.userId })
     .then(async (rec) => {
       if (rec) {
         res.json({
@@ -119,8 +119,8 @@ export const setFavorites = async (req, res) => {
         });
       } else {
         const doc = new PostUserFavorite({
-          post: req.params.id,
-          user: req.userId,
+          postId: req.params.id,
+          userId: req.userId,
         });
 
         try {
@@ -151,8 +151,8 @@ export const toggleRating = async (req, res) => {
   const postId = req.params.id;
 
   await PostUserRating.findOneAndUpdate({
-    post: postId,
-    user: req.userId,
+      postId: postId,
+      userId: req.userId,
   },
   { $set: { rating: rating } },
   { upsert: true },
@@ -218,7 +218,7 @@ export const getRecommendationPosts = async (req, res) => {
           select: ['_id', 'value'],
         })
         .populate({
-          path: 'author',
+          path: 'userId',
           populate: { path: 'avatar' },
           select: (['-__v', '-age', '-city', '-status', '-contacts']),
         })
@@ -245,14 +245,14 @@ export const getPost = async (req, res) => {
     { returnDocument: 'after' },
   )
     .populate({
-      path: 'author',
+      path: 'userId',
       populate: { path: 'avatar' },
     })
     .populate({
       path: 'comments',
       populate: [
         {
-          path: 'author',
+          path: 'userId',
           populate: { path: 'avatar' },
         },
         { path: 'rating' },
@@ -260,7 +260,7 @@ export const getPost = async (req, res) => {
       ],
     })
     .populate('image')
-    .populate({ path: 'likes', match: { 'user': { $in: req.userId } } })
+    .populate({ path: 'likes', match: { 'userId': { $in: req.userId } } })
     .populate('rating')
     .populate({
       path: 'tags',
@@ -268,7 +268,7 @@ export const getPost = async (req, res) => {
     })
     .populate({
       path: 'userRating',
-      match: { 'user': { $in: req.userId } },
+      match: { 'userId': { $in: req.userId } },
     })
     .then((post) => {
       if (!post) {
@@ -322,7 +322,7 @@ export const createPost = async (req, res) => {
     title: req.body.title,
     text: req.body.text,
     imageId: file?.id,
-    author: req.userId,
+    userId: req.userId,
     tags: tagIds,
   });
 
@@ -463,8 +463,8 @@ export const createComment = async (req, res) => {
 
   const doc = new Comment({
     text: req.body.text,
-    author: req.userId,
-    post: postId,
+    userId: req.userId,
+    postId: postId,
   });
 
   const comment = await doc.save();
@@ -506,8 +506,8 @@ export const toggleCommentRating = async (req, res) => {
   const commentId = req.params.id;
 
   await CommentUserRating.findOneAndUpdate({
-    comment: commentId,
-    user: req.userId,
+    commentId: commentId,
+    userId: req.userId,
   },
   { $set: { rating: rating } },
   { upsert: true },
@@ -524,14 +524,14 @@ export const getUserPostComments = async (req, res) => {
 
   await Post.find()
     .populate({
-      path: 'author',
+      path: 'userId',
       populate: { path: 'avatar' },
     })
     .populate({
       path: 'comments',
       populate: [
         {
-          path: 'author',
+          path: 'userId',
           populate: { path: 'avatar' },
         },
         { path: 'rating' },
@@ -543,7 +543,7 @@ export const getUserPostComments = async (req, res) => {
       const finData = data;
 
       finData.forEach(post => {
-        post.comments = post.comments.filter(com => com.author._id.toString() === userId);
+        post.comments = post.comments.filter(com => com.userId._id.toString() === userId);
       });
 
       res.json({

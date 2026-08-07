@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
 
 const CommentUserRatingSchema = new mongoose.Schema({
-  user: {
+  userId: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true,
   },
-  comment: {
+  commentId: {
     type: mongoose.Schema.ObjectId,
     ref: 'Comment',
     required: true,

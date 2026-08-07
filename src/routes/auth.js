@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { confirmEmail, login, register, resendLink, status } from '../controllers/AuthController.js';
+import { confirmEmail, login, register, resendLink, status } from '../controllers/AuthController.ts';
 import {loginValidation, registerValidation} from '../utils/validation.js';
 import checkAuth from '../utils/checkAuth.js';
 

@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 
 const UserFriends = new mongoose.Schema({
-    from: {
+    fromUserId: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',
     },
-    to: {
+    toUserId: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',
     },

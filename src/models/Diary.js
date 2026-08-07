@@ -1,25 +1,20 @@
 import mongoose from 'mongoose';
 
 const DiarySchema = new mongoose.Schema({
-  author: {
+  userId: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true,
   },
   day: Date,
-  foods: [{
-    name: String,
-    meals: [{
-      meal: String,
-      volume: Number,
-    }],
-    stat: {
-      cal: Number,
-      proteins: Number,
-      fats: Number,
-      carb: Number,
-      otherNutrients: Object,
+  portions: [{
+    foodId: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Food',
+      required: true,
     },
+    meal: String,
+    weightG: Number,
   }],
 }, {
   timestamps: true,

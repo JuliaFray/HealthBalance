@@ -5,11 +5,12 @@ export const getAllDiets = async (req, res) => {
   const userId = req.userId;
 
   const diets = await DietPlan.find(
-    { author: { $in: userId } },
+    { userId: { $in: userId } },
     {},
     { sort: { createdAt: -1 } },
   )
-    .populate({ path: 'author', select: ['_id'], populate: { path: 'healthInfo' } })
+    .populate({ path: 'userId', select: ['_id'], populate: { path: 'config' } })
+    .populate({ path: 'planByDay.portions', populate: {path: 'foodId'} })
     .exec();
 
   res.json({
@@ -23,7 +24,7 @@ export const getOneDiet = async (req, res) => {
   const dietId = req.params.id;
 
   DietPlan.findOne({ _id: dietId })
-    .populate({ path: 'author', select: ['_id'], populate: { path: 'healthInfo' } })
+    .populate({ path: 'userId', select: ['_id'], populate: { path: 'config' } })
     .then((diet) => {
       if (!diet) {
         res.status(404).json({
@@ -49,7 +50,7 @@ export const createPlan = async (req, res) => {
   const doc = new DietPlan({
     meals: req.body.meals,
     period: req.body.period,
-    author: req.userId,
+    userId: req.userId,
     name: req.body.name,
   });
 
@@ -113,13 +114,13 @@ export const updateDietPlan = async (req, res) => {
     },
     { upsert: true },
   ).exec()
-    .then(async diet => {
-      recalcFood(diet, update).then(() => {
-        res.json({
-          resultCode: 0,
-        });
-      });
-    });
+    // .then(async diet => {
+    //   recalcFood(diet, update).then(() => {
+    //     res.json({
+    //       resultCode: 0,
+    //     });
+    //   });
+    // });
 };
 
 export const addFood = async (req, res) => {
@@ -218,7 +219,7 @@ export const updateWeight = async (req, res) => {
       new: true,
     },
   )
-    .populate({ path: 'author', select: ['_id'], populate: { path: 'healthInfo' } })
+    .populate({ path: 'userId', select: ['_id'], populate: { path: 'healthInfo' } })
     .exec();
 };
 

@@ -3,12 +3,12 @@ import mongoose from 'mongoose';
 import CommentUserRating from './CommentUserRating.js';
 
 const CommentSchema = new mongoose.Schema({
-  author: {
+  userId: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true,
   },
-  post: {
+  postId: {
     type: mongoose.Schema.ObjectId,
     ref: 'Post',
     required: true,
@@ -26,7 +26,7 @@ const CommentSchema = new mongoose.Schema({
 CommentSchema.virtual('rating', {
   ref: CommentUserRating,
   localField: '_id',
-  foreignField: 'comment',
+  foreignField: 'commentId',
 }).get(arr => {
   return Array.isArray(arr) ? arr.reduce((sum, el) => sum + el.rating, 0) : 0;
 });
@@ -34,7 +34,7 @@ CommentSchema.virtual('rating', {
 CommentSchema.virtual('userRating', {
   ref: CommentUserRating,
   localField: '_id',
-  foreignField: 'comment',
+  foreignField: 'commentId',
   justOne: true,
 }).get(el => el ? el.rating : 0);
 

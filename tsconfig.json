@@ -1,0 +1,60 @@
+{
+  "compilerOptions": {
+    "rootDir": ".",
+    "target": "ESNext",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": false,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "jsx": "react-jsx",
+    "skipDefaultLibCheck": true,
+    "strictPropertyInitialization": false,
+    "downlevelIteration": true,
+    "importHelpers": true,
+    "noFallthroughCasesInSwitch": true,
+    "useDefineForClassFields": true,
+    "ignoreDeprecations": "6.0",
+    "baseUrl": "src",
+    "paths": {
+      "#models/*": [
+        "./models/*"
+      ],
+      "#types/*": [
+        "./types/*"
+      ],
+      "#utils/*": [
+        "./utils/*"
+      ],
+      "#constants/*": [
+        "./constants/*"
+      ],
+      "public": [
+        "./../public"
+      ]
+    }
+  },
+  "strict": true,
+  "noUnusedLocals": true,
+  "noUnusedParameters": true,
+  "exclude": [
+    "node_modules"
+  ],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
+  }
+}

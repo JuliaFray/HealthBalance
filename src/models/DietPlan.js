@@ -1,7 +1,9 @@
 import mongoose from 'mongoose';
+import UserFriends from './UserFriends.js';
+import Food from './Food.js';
 
 const DietPlanSchema = new mongoose.Schema({
-  author: {
+  userId: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true,
@@ -18,7 +20,7 @@ const DietPlanSchema = new mongoose.Schema({
     type: [String],
     required: true,
   },
-  stat: {
+  statResult: {
     cal: {
       type: Number,
       required: true,
@@ -40,27 +42,30 @@ const DietPlanSchema = new mongoose.Schema({
       required: true,
     },
   },
-  foods: [{
-    name: String,
-    days: [{
-      day: Number,
-      meals: [{
-        meal: String,
-        volume: Number,
-      }],
+  planByDay: [{
+    day: Number,
+    portions: [{
+      foodId: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'Food',
+        required: true,
+      },
+      meal: String,
+      weightG: Number,
     }],
-    stat: {
-      cal: Number,
-      proteins: Number,
-      fats: Number,
-      carb: Number,
-      otherNutrients: Object,
-    },
   }],
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
   toObject: { virtuals: true },
 });
+
+// DietPlanSchema.virtual('foods', {
+//   ref: Food,
+//   localField: 'planByDay.portions.foodId',
+//   foreignField: '_id',
+// }).get(arr => {
+//   return Array.isArray(arr) ? arr.filter(val => val.isAgree) : [];
+// });
 
 export default mongoose.model('DietPlan', DietPlanSchema);

@@ -23,7 +23,7 @@ const Dialog = new mongoose.Schema({
 Dialog.virtual('lastMsg', {
     ref: Message,
     localField: '_id',
-    foreignField: 'dialog',
+    foreignField: 'dialogId',
     justOne: true,
     options: {sort: {createdAt: -1}}
 }).get(msg => msg)

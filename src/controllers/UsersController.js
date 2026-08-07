@@ -80,21 +80,21 @@ export const getProfileStats = async (req, res) => {
     let favorites = await Post.find()
         .populate({
             path: 'likes',
-            match: {'user': {$in: req.params.id}}
+            match: {'userId': {$in: req.params.id}}
         })
         .exec();
 
     let posts = await Post
-        .find({author: {$in: req.params.id}})
+        .find({userId: {$in: req.params.id}})
         .populate('rating')
         .exec();
 
     let comments = await Comment
-        .find({author: {$in: req.params.id}})
+        .find({userId: {$in: req.params.id}})
         .exec();
 
     let marks = await PostUserRating
-        .find({user: {$in: req.params.id}})
+        .find({userId: {$in: req.params.id}})
         .exec();
 
     let followers = await User.findById(req.params.id).populate('followers').exec();
@@ -176,7 +176,7 @@ export const createFriendLink = async (req, res) => {
 
 
     await UserFriends.findOneAndUpdate(
-        {from: userId, to: friendId},
+        {fromUserId: userId, toUserId: friendId},
         {$set: {isAgree: false}},
         {upsert: true}
     ).exec()
@@ -208,7 +208,7 @@ export const toggleFriend = async (req, res) => {
 
     if (isAgree && JSON.parse(isAgree)) {
         await UserFriends.findOneAndUpdate(
-            {from: fromId, to: userId},
+            {fromUserId: fromId, toUserId: userId},
             {$set: {isAgree: true}},
             {upsert: true}
         ).exec()
@@ -219,7 +219,7 @@ export const toggleFriend = async (req, res) => {
             });
     } else {
         await UserFriends.deleteOne(
-            {from: fromId, to: userId}
+            {fromUserId: fromId, toUserId: userId}
         ).exec()
             .then(() => {
                 res.json({
@@ -246,10 +246,10 @@ export const getFriendNotifications = async (req, res) => {
     await UserFriends.find({
         $and: [
             {isAgree: false},
-            {to: {$in: req.params.id}}
+            {toUserId: {$in: req.params.id}}
         ]
     })
-        .populate('from')
+        .populate('fromUserId')
         .exec()
         .then(ntfs => {
             ntfs.forEach(ntf => {

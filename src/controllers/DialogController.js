@@ -13,8 +13,8 @@ export const getAllDialogs = async (req, res) => {
         .populate(
             {
                 path: 'lastMsg', populate: [
-                    {path: 'from', populate: 'avatar'},
-                    {path: 'to', populate: 'avatar'}
+                    {path: 'fromUserId', populate: 'avatar'},
+                    {path: 'toUserId', populate: 'avatar'}
                 ]
             }
         )
@@ -38,7 +38,7 @@ export const getMessagesByDialog = async (req, res) => {
             {},
             {sort: {createdAt: 1}}
         )
-        .populate({path: 'from', populate: {path: 'avatar'}})
+        .populate({path: 'fromUserId', populate: {path: 'avatar'}})
         .limit(50)
         .exec();
 
@@ -78,11 +78,11 @@ export const saveMessage = async (req, res) => {
     return promise
         .then(dialog => {
             return new Message({
-                from: req.from,
-                to: req.to,
+                fromUserId: req.from,
+                toUserId: req.to,
                 text: req.text,
-                dialog: dialog._id
+                dialogId: dialog._id
             }).save()
         })
-        .then(msg => msg.populate({path: 'from', populate: {path: 'avatar'}}));
+        .then(msg => msg.populate({path: 'fromUserId', populate: {path: 'avatar'}}));
 }

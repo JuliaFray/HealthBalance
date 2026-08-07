@@ -23,7 +23,7 @@ const PostSchema = new mongoose.Schema({
   imageId: {
     type: mongoose.Schema.ObjectId,
   },
-  author: {
+  userId: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',
     required: true,
@@ -41,14 +41,14 @@ const PostSchema = new mongoose.Schema({
 PostSchema.virtual('likes', {
   ref: PostUserFavorite,
   localField: '_id',
-  foreignField: 'post',
+  foreignField: 'postId',
   count: true,
 });
 
 PostSchema.virtual('rating', {
   ref: PostUserRating,
   localField: '_id',
-  foreignField: 'post',
+  foreignField: 'postId',
 }).get(arr => {
   return Array.isArray(arr) ? arr.reduce((sum, el) => sum + el.rating, 0) : 0;
 });
@@ -56,14 +56,14 @@ PostSchema.virtual('rating', {
 PostSchema.virtual('userRating', {
   ref: PostUserRating,
   localField: '_id',
-  foreignField: 'post',
+  foreignField: 'postId',
   justOne: true,
 }).get(el => el ? el.rating : 0);
 
 PostSchema.virtual('comments', {
   ref: Comment,
   localField: '_id',
-  foreignField: 'post',
+  foreignField: 'postId',
 });
 
 PostSchema.virtual('image', {

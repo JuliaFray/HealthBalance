@@ -3,10 +3,15 @@ import mongoose from 'mongoose';
 import File from './File.js';
 import Post from './Post.js';
 import UserFriends from './UserFriends.js';
-import UserHealthInfo from './UserHealthInfo.js';
+import UserConfig from './UserConfig.js';
 
 const UserSchema = new mongoose.Schema({
   email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  login: {
     type: String,
     required: true,
     unique: true,
@@ -15,22 +20,15 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  login: {
-    type: String,
-    required: true,
-    unique: true,
-  },
+  isVerified: { type: Boolean, default: false },
   avatarId: {
     type: mongoose.Schema.ObjectId,
   },
-  birthDate: Date,
   followers: {
     type: [mongoose.Schema.ObjectId],
     ref: 'User',
     default: [],
   },
-  description: String,
-  isVerified: { type: Boolean, default: false },
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -55,7 +53,7 @@ UserSchema.virtual('avatar', {
 UserSchema.virtual('friendsTo', {
   ref: UserFriends,
   localField: '_id',
-  foreignField: 'to',
+  foreignField: 'toUserId',
 }).get(arr => {
   return Array.isArray(arr) ? arr.filter(val => val.isAgree) : [];
 });
@@ -63,7 +61,7 @@ UserSchema.virtual('friendsTo', {
 UserSchema.virtual('friends', {
   ref: UserFriends,
   localField: '_id',
-  foreignField: 'from',
+  foreignField: 'fromUserId',
 }).get(arr => {
   return Array.isArray(arr) ? arr.filter(val => val.isAgree) : [];
 });
@@ -71,14 +69,14 @@ UserSchema.virtual('friends', {
 UserSchema.virtual('postCount', {
   ref: Post,
   localField: '_id',
-  foreignField: 'author',
+  foreignField: 'userId',
   count: true,
 });
 
-UserSchema.virtual('healthInfo', {
-  ref: UserHealthInfo,
+UserSchema.virtual('config', {
+  ref: UserConfig,
   localField: '_id',
-  foreignField: 'author',
+  foreignField: 'userId',
   justOne: true,
 });
 

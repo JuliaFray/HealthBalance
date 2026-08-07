@@ -5,9 +5,9 @@ export const getDiaryByDate = async (req, res) => {
   const date = req.query['date'];
 
   const diets = await Diary.find(
-    { $and: [{ author: { $in: userId } }, { day: { $in: new Date(date) } }] },
+    { $and: [{ userId: { $in: userId } }, { day: { $in: new Date(date) } }] },
   )
-    .populate({ path: 'author', select: ['_id'], populate: { path: 'healthInfo' } })
+    .populate({ path: 'userId', select: ['_id'], populate: { path: 'config' } })
     .exec();
 
   res.json({

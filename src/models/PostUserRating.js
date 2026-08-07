@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
 
 const PostUserRatingSchema = new mongoose.Schema({
-    user: {
+    userId: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',
         required: true
     },
-    post: {
+    postId: {
         type: mongoose.Schema.ObjectId,
         ref: 'Post',
         required: true

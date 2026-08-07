@@ -1,16 +1,16 @@
 import mongoose from 'mongoose';
 
 const Message = new mongoose.Schema({
-    from: {
+    fromUserId: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',
     },
-    to: {
+    toUserId: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',
     },
     text: String,
-    dialog: {
+    dialogId: {
         type: mongoose.Schema.ObjectId,
         ref: 'Dialog',
         required: false

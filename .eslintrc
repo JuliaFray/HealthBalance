@@ -5,7 +5,9 @@
   },
   "root": true,
   "extends": [
-    "eslint:recommended"
+    "eslint:recommended",
+    "next",
+    "next/core-web-vitals"
   ],
   "globals": {
     "LOGGER": true
@@ -52,6 +54,28 @@
           "sibling",
           "index"
         ],
+        "pathGroups": [
+          {
+            "pattern": "#models/**",
+            "group": "internal",
+            "position": "before"
+          },
+          {
+            "pattern": "#types/**",
+            "group": "internal",
+            "position": "before"
+          },
+          {
+            "pattern": "#utils/**",
+            "group": "internal",
+            "position": "before"
+          },
+          {
+            "pattern": "#constants/**",
+            "group": "internal",
+            "position": "before"
+          }
+        ],
         "pathGroupsExcludedImportTypes": [
           "builtin"
         ],
@@ -62,6 +86,7 @@
         },
         "warnOnUnassignedImports": true
       }
-    ]
+    ],
+    "import/newline-after-import": ["error", { "count": 1 }]
   }
 }
