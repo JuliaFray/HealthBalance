@@ -35,11 +35,14 @@
       "#types/*": [
         "./types/*"
       ],
-      "#utils/*": [
-        "./utils/*"
+      "#enums/*": [
+        "./enums/*"
       ],
       "#constants/*": [
         "./constants/*"
+      ],
+      "#utils/*": [
+        "./utils/*"
       ],
       "public": [
         "./../public"

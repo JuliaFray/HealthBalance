@@ -9,19 +9,22 @@ import * as nodemailer from 'nodemailer';
 import User from '#models/User.js';
 import VerifyToken from '#models/VerifyToken.js';
 
-import type { ILoginResponse } from '#types/user.interface.js';
+import type { ILoginResponse } from '#types/user.interface.ts';
 
-import { EXPIRES_KEY, SECRET_KEY } from '#utils/constants.js';
-import * as ERRORS from '#utils/errors.js';
-import { NOT_FOUND_USER } from '#utils/errors.js';
+import { StatusCode } from '#enums/status-code.enum.ts';
 
 import {
   ACCOUNT_IS_VERIFIED,
   CONFIRM_EMAIL,
   EMAIL_IS_NOT_VERIFIED,
   EMAIL_IS_VERIFIED,
-  LINK_IS_EXPIRED, USER_EXISTS,
+  LINK_IS_EXPIRED,
+  USER_EXISTS,
 } from '#constants/text.ts';
+
+import { EXPIRES_KEY, SECRET_KEY } from '#utils/constants.js';
+import * as ERRORS from '#utils/errors.js';
+import { NOT_FOUND_USER } from '#utils/errors.js';
 
 const __dirname = path.resolve(path.dirname(''));
 
@@ -36,8 +39,8 @@ export const register = async (req, res) => {
     .then(async (user) => {
       if (user) {
         // if email is exist into database i.e. email is associated with another user.
-        return res.status(400).json({
-          resultCode: 1,
+        return res.status(StatusCode.ValidationError).json({
+          resulCode: StatusCode.ValidationError,
           message: USER_EXISTS,
         });
       } else {
@@ -54,15 +57,18 @@ export const register = async (req, res) => {
           )
           .catch(err => {
             if (err) {
-              return res.status(500).json({ message: err.message });
+              return res.status(StatusCode.UndefinedError).json({
+                resulCode: StatusCode.UndefinedError,
+                message: err.message,
+              });
             }
           });
       }
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({
-          resultCode: 1,
+        return res.status(StatusCode.UndefinedError).json({
+          resulCode: StatusCode.UndefinedError,
           message: err.message,
         });
       }
@@ -81,16 +87,16 @@ export const login = async (req, res) => {
     .then(data => {
       const user = data as unknown as ILoginResponse;
       if (!user) {
-        return res.status(404).json({
-          resultCode: 1,
+        return res.status(StatusCode.NotFound).json({
+          resulCode: StatusCode.NotFound,
           message: ERRORS.NOT_FOUND_USER,
         });
       }
 
       bcrypt.compare(req.body.password, user.passwordHash, (err, result) => {
         if (err) {
-          return res.status(400).json({
-            resultCode: 1,
+          return res.status(StatusCode.ValidationError).json({
+            resulCode: StatusCode.ValidationError,
             message: ERRORS.UNDEFINED_ERROR,
           });
         }
@@ -103,21 +109,21 @@ export const login = async (req, res) => {
             );
 
             return res.json({
-              resultCode: 0,
+              resulCode: StatusCode.Success,
               data: { _id: user._id, name: user.login, email: user.email, avatar: user.avatar },
               token: token,
             });
           } else {
             return res
-              .status(401)
+              .status(StatusCode.ValidationError)
               .json({
                 message: EMAIL_IS_NOT_VERIFIED,
               });
 
           }
         } else {
-          return res.status(400).json({
-            resultCode: 1,
+          return res.status(StatusCode.ValidationError).json({
+            resulCode: StatusCode.ValidationError,
             message: ERRORS.WRONG_LOGIN_PASS,
           });
         }
@@ -125,7 +131,10 @@ export const login = async (req, res) => {
     })
     .catch(err => {
       if (err) {
-        return res.status(500).json({ resultCode: 1, message: err.message });
+        return res.status(StatusCode.UndefinedError).json({
+          resulCode: StatusCode.UndefinedError,
+          message: err.message,
+        });
       }
     });
 };
@@ -135,14 +144,14 @@ export const status = async (req, res) => {
     const user = await User.findById(req.userId).populate('avatar');
 
     if (!user) {
-      return res.status(404).json({
-        resultCode: 1,
+      return res.status(StatusCode.NotFound).json({
+        resulCode: StatusCode.NotFound,
         message: ERRORS.NOT_FOUND,
       });
     }
 
     res.json({
-      resultCode: 0,
+      resulCode: StatusCode.Success,
       data: user,
       token: jwt.sign(
         { _id: req.userId },
@@ -150,12 +159,10 @@ export const status = async (req, res) => {
         { expiresIn: EXPIRES_KEY },
       ),
     });
-
-
   } catch (err) {
     console.error(err);
-    res.status(500).json({
-      resultCode: 1,
+    res.status(StatusCode.UndefinedError).json({
+      resulCode: StatusCode.UndefinedError,
       error: ERRORS.ACCESS_DENIED,
     });
   }
@@ -171,30 +178,36 @@ export const confirmEmail = async (req, res) => {
           .then(user => {
             if (user) {
               if (user.isVerified) {
-                return res.status(200).json({
-                  resultCode: 1,
+                return res.status(StatusCode.Success).json({
+                  resulCode: StatusCode.Success,
                   message: EMAIL_IS_VERIFIED,
                 });
               } else {
                 user.isVerified = true;
                 user.save()
                   .then(() => {
-                    res.status(200).send({ message: ACCOUNT_IS_VERIFIED });
+                    res.status(StatusCode.Success).send({
+                      resulCode: StatusCode.Success,
+                      message: ACCOUNT_IS_VERIFIED,
+                    });
                   })
                   .catch(err => {
-                    res.status(500).send({ message: err.message });
+                    res.status(StatusCode.UndefinedError).send({
+                      resulCode: StatusCode.UndefinedError,
+                      message: err.message,
+                    });
                   });
               }
             } else {
-              return res.status(404).json({
-                resultCode: 1,
+              return res.status(StatusCode.NotFound).json({
+                resulCode: StatusCode.NotFound,
                 message: ERRORS.NOT_FOUND_USER,
               });
             }
           });
       } else {
-        return res.status(404).json({
-          resultCode: 1,
+        return res.status(StatusCode.NotFound).json({
+          resulCode: StatusCode.NotFound,
           message: LINK_IS_EXPIRED,
         });
       }
@@ -208,13 +221,13 @@ export const resendLink = async (req, res) => {
       if (user) {
         if (user.isVerified) {
           // user has been already verified
-          return res.status(200).send({ message: EMAIL_IS_VERIFIED });
+          return res.status(200).send({ resulCode: StatusCode.Success, message: EMAIL_IS_VERIFIED });
         } else {
           // send verification link
           createTokenAndSendMail(user, req.body.email, res);
         }
       } else {
-        return res.status(400).send({ message: NOT_FOUND_USER });
+        return res.status(StatusCode.NotFound).send({ resulCode: StatusCode.NotFound, message: NOT_FOUND_USER });
       }
     });
 };
@@ -251,15 +264,13 @@ const createTokenAndSendMail = (user, toEmail, res) => {
       await transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
           console.error('Ошибка отправки:', error);
-          res.status(500).json({
-            resultCode: 1,
+          res.status(StatusCode.UndefinedError).json({
+            resulCode: StatusCode.UndefinedError,
             message: error.response,
           });
         } else {
           console.log('Письмо отправлено:', info.messageId);
-          res.json({
-            resultCode: 0,
-          });
+          res.json({ resulCode: StatusCode.Success, message: 'mail sent' });
         }
       });
     });

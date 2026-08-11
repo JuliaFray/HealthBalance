@@ -65,6 +65,7 @@
     "#utils/*.js": "./src/utils/*.js",
     "#models/*.js": "./src/models/*.js",
     "#types/*": "./src/types/*",
+    "#enums/*": "./src/enums/*",
     "#constants/*": "./src/constants/*"
   }
 }

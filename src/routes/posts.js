@@ -5,7 +5,7 @@ import {
   createPost,
   deletePost,
   deletePostImage,
-  getAll,
+  getAllPosts,
   getPopularPosts,
   getPost,
   getRecommendationPosts,
@@ -14,7 +14,7 @@ import {
   toggleCommentRating,
   toggleRating,
   updatePost,
-} from '../controllers/PostController.js';
+} from '../controllers/PostController.ts';
 import checkAuth, { enhanceHeaders } from '../utils/checkAuth.js';
 import upload from '../utils/gridFsStorage.js';
 import handleErrors from '../utils/handleErrors.js';
@@ -24,7 +24,7 @@ const router = express.Router();
 
 router.use(enhanceHeaders);
 
-router.get('/', getAll);
+router.get('/', getAllPosts);
 router.get('/post-comments', getUserPostComments);
 router.put('/:id/like', setFavorites);
 router.put('/:id/rating', toggleRating);
