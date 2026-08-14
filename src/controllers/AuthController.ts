@@ -40,7 +40,6 @@ export const register = async (req, res) => {
       if (user) {
         // if email is exist into database i.e. email is associated with another user.
         return res.status(StatusCode.ValidationError).json({
-          resulCode: StatusCode.ValidationError,
           message: USER_EXISTS,
         });
       } else {
@@ -58,7 +57,6 @@ export const register = async (req, res) => {
           .catch(err => {
             if (err) {
               return res.status(StatusCode.UndefinedError).json({
-                resulCode: StatusCode.UndefinedError,
                 message: err.message,
               });
             }
@@ -68,7 +66,6 @@ export const register = async (req, res) => {
     .catch(err => {
       if (err) {
         return res.status(StatusCode.UndefinedError).json({
-          resulCode: StatusCode.UndefinedError,
           message: err.message,
         });
       }
@@ -81,14 +78,13 @@ export const login = async (req, res) => {
       { email: req.body.email },
       { login: req.body.email },
     ],
-  }).populate('avatar')
-    .select('_id, login email avatar passwordHash isVerified')
-    .lean()
+  })
+    .select('_id, login email avatarId passwordHash isVerified')
+    .exec()
     .then(data => {
       const user = data as unknown as ILoginResponse;
       if (!user) {
         return res.status(StatusCode.NotFound).json({
-          resulCode: StatusCode.NotFound,
           message: ERRORS.NOT_FOUND_USER,
         });
       }
@@ -96,7 +92,6 @@ export const login = async (req, res) => {
       bcrypt.compare(req.body.password, user.passwordHash, (err, result) => {
         if (err) {
           return res.status(StatusCode.ValidationError).json({
-            resulCode: StatusCode.ValidationError,
             message: ERRORS.UNDEFINED_ERROR,
           });
         }
@@ -108,9 +103,8 @@ export const login = async (req, res) => {
               { expiresIn: EXPIRES_KEY },
             );
 
-            return res.json({
-              resulCode: StatusCode.Success,
-              data: { _id: user._id, name: user.login, email: user.email, avatar: user.avatar },
+            return res.status(StatusCode.Success).json({
+              data: { _id: user._id, login: user.login, email: user.email, avatarId: user.avatarId },
               token: token,
             });
           } else {
@@ -123,7 +117,6 @@ export const login = async (req, res) => {
           }
         } else {
           return res.status(StatusCode.ValidationError).json({
-            resulCode: StatusCode.ValidationError,
             message: ERRORS.WRONG_LOGIN_PASS,
           });
         }
@@ -132,7 +125,6 @@ export const login = async (req, res) => {
     .catch(err => {
       if (err) {
         return res.status(StatusCode.UndefinedError).json({
-          resulCode: StatusCode.UndefinedError,
           message: err.message,
         });
       }
@@ -141,17 +133,15 @@ export const login = async (req, res) => {
 
 export const status = async (req, res) => {
   try {
-    const user = await User.findById(req.userId).populate('avatar');
+    const user = await User.findById(req.userId);
 
     if (!user) {
       return res.status(StatusCode.NotFound).json({
-        resulCode: StatusCode.NotFound,
         message: ERRORS.NOT_FOUND,
       });
     }
 
-    res.json({
-      resulCode: StatusCode.Success,
+    res.status(StatusCode.Success).json({
       data: user,
       token: jwt.sign(
         { _id: req.userId },
@@ -162,7 +152,6 @@ export const status = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(StatusCode.UndefinedError).json({
-      resulCode: StatusCode.UndefinedError,
       error: ERRORS.ACCESS_DENIED,
     });
   }
@@ -179,35 +168,30 @@ export const confirmEmail = async (req, res) => {
             if (user) {
               if (user.isVerified) {
                 return res.status(StatusCode.Success).json({
-                  resulCode: StatusCode.Success,
                   message: EMAIL_IS_VERIFIED,
                 });
               } else {
                 user.isVerified = true;
                 user.save()
                   .then(() => {
-                    res.status(StatusCode.Success).send({
-                      resulCode: StatusCode.Success,
+                    res.status(StatusCode.Success).json({
                       message: ACCOUNT_IS_VERIFIED,
                     });
                   })
                   .catch(err => {
-                    res.status(StatusCode.UndefinedError).send({
-                      resulCode: StatusCode.UndefinedError,
+                    res.status(StatusCode.UndefinedError).json({
                       message: err.message,
                     });
                   });
               }
             } else {
               return res.status(StatusCode.NotFound).json({
-                resulCode: StatusCode.NotFound,
                 message: ERRORS.NOT_FOUND_USER,
               });
             }
           });
       } else {
         return res.status(StatusCode.NotFound).json({
-          resulCode: StatusCode.NotFound,
           message: LINK_IS_EXPIRED,
         });
       }
@@ -221,13 +205,13 @@ export const resendLink = async (req, res) => {
       if (user) {
         if (user.isVerified) {
           // user has been already verified
-          return res.status(200).send({ resulCode: StatusCode.Success, message: EMAIL_IS_VERIFIED });
+          return res.status(StatusCode.Success).json({ message: EMAIL_IS_VERIFIED });
         } else {
           // send verification link
           createTokenAndSendMail(user, req.body.email, res);
         }
       } else {
-        return res.status(StatusCode.NotFound).send({ resulCode: StatusCode.NotFound, message: NOT_FOUND_USER });
+        return res.status(StatusCode.NotFound).json({ message: NOT_FOUND_USER });
       }
     });
 };
@@ -265,12 +249,11 @@ const createTokenAndSendMail = (user, toEmail, res) => {
         if (error) {
           console.error('Ошибка отправки:', error);
           res.status(StatusCode.UndefinedError).json({
-            resulCode: StatusCode.UndefinedError,
             message: error.response,
           });
         } else {
           console.log('Письмо отправлено:', info.messageId);
-          res.json({ resulCode: StatusCode.Success, message: 'mail sent' });
+          res.status(StatusCode.Success).json();
         }
       });
     });

@@ -11,9 +11,10 @@ export default (req, res, next) => {
 
       req.userId = decoded._id;
       req.token = token;
-
+      console.log(decoded._id)
       next();
     } catch (err) {
+      console.log(err)
       return res.status(403).json({
         message: ACCESS_DENIED,
         resultCode: 3,

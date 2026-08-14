@@ -9,8 +9,29 @@ export interface ILoginResponse {
   _id: string;
   login: string;
   email: string;
-  avatar?: IImage;
+  avatarId?: number;
   passwordHash?: string;
   isVerified?: boolean;
 }
 
+interface IUserStats {
+  followersCount?: number;
+  folowsCount?: number;
+  postCount?: number;
+}
+
+export interface IUser  {
+  _id: string;
+  userId: string;
+  login: string;
+  email: string;
+  avatarId?: string;
+  avatar?: IImage;
+  birthDate?: Date;
+  friends?: IUser[];
+  followers?: IUser[];
+  isFollowed?: boolean;
+  isFriend?: boolean;
+  createdAt?: Date;
+  stats?: IUserStats;
+}

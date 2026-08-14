@@ -2,18 +2,18 @@ import express from 'express';
 
 import {
   createComment,
-  createPost,
-  deletePost,
+  createArticle,
+  deleteArticle,
   deletePostImage,
-  getAllPosts,
-  getPopularPosts,
-  getPost,
-  getRecommendationPosts,
-  getUserPostComments,
-  setFavorites,
+  getAllArticles,
+  getPopularArticles,
+  getArticleById,
+  getRecommendationArticles,
+  getUserArticleComments,
+  addArticleToFavorite,
   toggleCommentRating,
-  toggleRating,
-  updatePost,
+  toggleArticleRating,
+  updateArticle,
 } from '../controllers/PostController.ts';
 import checkAuth, { enhanceHeaders } from '../utils/checkAuth.js';
 import upload from '../utils/gridFsStorage.js';
@@ -24,16 +24,16 @@ const router = express.Router();
 
 router.use(enhanceHeaders);
 
-router.get('/', getAllPosts);
-router.get('/post-comments', getUserPostComments);
-router.put('/:id/like', setFavorites);
-router.put('/:id/rating', toggleRating);
-router.get('/popular', getPopularPosts);
-router.get('/recommendations', getRecommendationPosts);
-router.get('/:id', getPost);
-router.post('/', checkAuth, postCreateValidation, upload.single('image'), handleErrors, createPost);
-router.put('/:id', checkAuth, postCreateValidation, deletePostImage, upload.single('image'), handleErrors, updatePost);
-router.delete('/:id', checkAuth, deletePostImage, deletePost);
+router.get('/',checkAuth, getAllArticles);
+router.get('/post-comments', checkAuth, getUserArticleComments);
+router.put('/:id/like', checkAuth,addArticleToFavorite);
+router.put('/:id/rating', checkAuth, toggleArticleRating);
+router.get('/popular', checkAuth,getPopularArticles);
+router.get('/recommendations', checkAuth,getRecommendationArticles);
+router.get('/:id', checkAuth, getArticleById);
+router.post('/', checkAuth, postCreateValidation, upload.single('image'), handleErrors, createArticle);
+router.put('/:id', checkAuth, postCreateValidation, deletePostImage, upload.single('image'), handleErrors, updateArticle);
+router.delete('/:id', checkAuth, deletePostImage, deleteArticle);
 
 router.post('/:id/comment', checkAuth, createComment);
 router.put('/:id/comment-rating', checkAuth, toggleCommentRating);

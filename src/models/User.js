@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 
 import File from './File.js';
 import Post from './Post.js';
-import UserFriends from './UserFriends.js';
 import UserConfig from './UserConfig.js';
+import UserFriends from './UserFriends.js';
 
 const UserSchema = new mongoose.Schema({
   email: {
@@ -21,9 +21,7 @@ const UserSchema = new mongoose.Schema({
     required: true,
   },
   isVerified: { type: Boolean, default: false },
-  avatarId: {
-    type: mongoose.Schema.ObjectId,
-  },
+  avatarId: Number,
   followers: {
     type: [mongoose.Schema.ObjectId],
     ref: 'User',
@@ -43,12 +41,12 @@ const UserSchema = new mongoose.Schema({
 });
 
 
-UserSchema.virtual('avatar', {
-  ref: File.Chunk,
-  localField: 'avatarId',
-  foreignField: 'files_id',
-  justOne: true,
-});
+// UserSchema.virtual('avatar', {
+//   ref: File.Chunk,
+//   localField: 'avatarId',
+//   foreignField: 'files_id',
+//   justOne: true,
+// });
 
 UserSchema.virtual('friendsTo', {
   ref: UserFriends,

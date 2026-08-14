@@ -27,6 +27,7 @@
     }
   },
   "rules": {
+    "no-undef": "off",
     "import/no-unresolved": "error",
     "indent": [
       "error",

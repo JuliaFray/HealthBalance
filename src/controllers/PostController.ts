@@ -8,23 +8,26 @@ import PostUserRating from '#models/PostUserRating.js';
 import Tag from '#models/Tag.js';
 import User from '#models/User.js';
 
+import { StatusCode } from '#enums/status-code.enum.ts';
+
 import * as ERRORS from '#utils/errors.js';
 import { calculateOffsetAndLimit } from '#utils/helper.js';
 
-import { StatusCode } from '#enums/status-code.enum.ts';
 
 import { removeFile } from './FileController.js';
 
-export const getAllPosts = async (req, res) => {
+// -----Articles-----
+
+export const getAllArticles = async (req, res) => {
   const userId = req.query['userId'];
 
   let searchValue = req.query['searchValue'];
-  const tabIndex = +req.query['tabIndex'];
+  const tabIndex = req.query['tabIndex'];
   const tags = req.query['tags'];
   const authors = req.query['authors'];
   const currentPage = req.query['currentPage'];
-  const isFavoritePosts = !!req.query['isFavoritePosts'] && JSON.parse(req.query['isFavoritePosts']);
-  const isMinePosts = !!req.query['isMinePosts'] && JSON.parse(req.query['isMinePosts']);
+  const isFavoriteArticles = !!req.query['isFavoritePosts'] && JSON.parse(req.query['isFavoritePosts']);
+  const isMineArticles = !!req.query['isMinePosts'] && JSON.parse(req.query['isMinePosts']);
 
   const where: FilterQuery<any>[] = [];
 
@@ -46,11 +49,11 @@ export const getAllPosts = async (req, res) => {
     where.push({ userId: { $in: JSON.parse(authors) } });
   }
 
-  if (isMinePosts && !isFavoritePosts) {
+  if (isMineArticles && !isFavoriteArticles) {
     where.push({ userId: { $in: userId } });
   }
 
-  if (tabIndex === 2 && userId) {
+  if (tabIndex === 'mine' && userId) {
     const profile = await User.findById(userId)
       .populate('followers')
       .exec();
@@ -65,9 +68,9 @@ export const getAllPosts = async (req, res) => {
   let count = await Post.countDocuments(query).exec();
   let offsetAndLimit = calculateOffsetAndLimit(currentPage);
 
-  let posts;
+  let articles;
 
-  const postFindRequest = Post.find(query, {}, { sort: { createdAt: -1 } })
+  const articlesFindRequest = Post.find(query, {}, { sort: { createdAt: -1 } })
     .select(['-__v', '-updatedAt', '-userId.__v'])
     .populate('comments')
     .populate({ path: 'likes', match: { 'userId': { $in: req.userId } } })
@@ -75,86 +78,32 @@ export const getAllPosts = async (req, res) => {
     .populate({ path: 'userRating', match: { 'userId': { $in: req.userId } } })
     .populate({ path: 'tags', select: ['_id', 'value'] })
     .populate({
-      path: 'userId', populate: { path: 'avatar' },
+      path: 'userId',
       select: (['-__v', '-age', '-city', '-status', '-contacts']),
     });
 
-  if (isFavoritePosts) {
-    posts = await postFindRequest
-      .lean();
+  if (isFavoriteArticles) {
+    articles = await articlesFindRequest
+      .exec();
   } else {
-    posts = await postFindRequest
+    articles = await articlesFindRequest
       .limit(offsetAndLimit.limit)
       .skip(offsetAndLimit.offset)
-      .lean();
+      .exec();
   }
 
-  if (isFavoritePosts) {
-    count = posts.filter(it => !!it.likes).length;
-    posts = posts.filter(it => !!it.likes);
+  if (isFavoriteArticles) {
+    count = articles.filter(it => !!it.likes).length;
+    articles = articles.filter(it => !!it.likes);
   }
 
-  if (userId && tabIndex === 1 || !userId && tabIndex === 0) {
-    posts.sort((a, b) => {
-      return b.rating - a.rating;
-    });
-  }
-
-  res.json({
-    data: posts,
+  res.status(StatusCode.Success).json({
+    data: articles,
     totalCount: count,
   });
 };
 
-export const setFavorites = async (req, res) => {
-  await PostUserFavorite.findOneAndDelete({ postId: req.params.id, userId: req.userId })
-    .then(async (rec) => {
-      if (rec) {
-        res.json({
-        });
-      } else {
-        const doc = new PostUserFavorite({
-          postId: req.params.id,
-          userId: req.userId,
-        });
-
-        try {
-          await doc.save();
-
-          res.status(StatusCode.Success);
-        } catch (e) {
-          console.log(e);
-          res.status(StatusCode.UndefinedError).json({
-            message: ERRORS.UNDEFINED_ERROR,
-          });
-        }
-      }
-    }).catch(err => {
-      console.error(err);
-      res.status(StatusCode.UndefinedError).json({
-        message: ERRORS.UNDEFINED_ERROR,
-      });
-    });
-};
-
-export const toggleRating = async (req, res) => {
-  const rating = req.query['rating'];
-  const postId = req.params.id;
-
-  await PostUserRating.findOneAndUpdate({
-    postId: postId,
-    userId: req.userId,
-  },
-  { $set: { rating: rating } },
-  { upsert: true },
-  ).exec()
-    .then(() => {
-      res.json({
-      });
-    });
-};
-
-export const getPopularPosts = async (req, res) => {
+export const getPopularArticles = async (req, res) => {
   Post.find()
     .sort('-viewsCount')
     .populate('image')
@@ -165,7 +114,7 @@ export const getPopularPosts = async (req, res) => {
           error: ERRORS.NOT_FOUND,
         });
       }
-      res.json({
+      res.status(StatusCode.Success).json({
         data: post,
       });
     }).catch(err => {
@@ -176,7 +125,7 @@ export const getPopularPosts = async (req, res) => {
     });
 };
 
-export const getRecommendationPosts = async (req, res) => {
+export const getRecommendationArticles = async (req, res) => {
   const postId = req.query['postId'];
 
   await Post.findById(postId).populate({
@@ -205,14 +154,13 @@ export const getRecommendationPosts = async (req, res) => {
         })
         .populate({
           path: 'userId',
-          populate: { path: 'avatar' },
           select: (['-__v', '-age', '-city', '-status', '-contacts']),
         })
         .limit(5)
         .exec();
     })
     .then(posts => {
-      res.json({
+      res.status(StatusCode.Success).json({
         data: posts,
       });
     })
@@ -221,7 +169,7 @@ export const getRecommendationPosts = async (req, res) => {
     });
 };
 
-export const getPost = async (req, res) => {
+export const getArticleById = async (req, res) => {
   const postId = req.params.id;
 
   Post.findOneAndUpdate(
@@ -231,14 +179,12 @@ export const getPost = async (req, res) => {
   )
     .populate({
       path: 'userId',
-      populate: { path: 'avatar' },
     })
     .populate({
       path: 'comments',
       populate: [
         {
           path: 'userId',
-          populate: { path: 'avatar' },
         },
         { path: 'rating' },
         { path: 'userRating' },
@@ -258,20 +204,67 @@ export const getPost = async (req, res) => {
     .then((post) => {
       if (!post) {
         res.status(StatusCode.NotFound).json({
-          error: ERRORS.NOT_FOUND,
+          message: ERRORS.NOT_FOUND,
         });
         return;
       }
-      res.json({
+      res.status(StatusCode.Success).json({
         data: post,
       });
     }).catch(err => {
       console.error(err);
       res.status(StatusCode.UndefinedError).json({
-        error: ERRORS.UNDEFINED_ERROR,
+        message: ERRORS.UNDEFINED_ERROR,
       });
     });
 };
+
+export const addArticleToFavorite = async (req, res) => {
+  await PostUserFavorite.findOneAndDelete({ postId: req.params.id, userId: req.userId })
+    .then(async (rec) => {
+      if (rec) {
+        res.json({});
+      } else {
+        const doc = new PostUserFavorite({
+          postId: req.params.id,
+          userId: req.userId,
+        });
+
+        try {
+          await doc.save();
+
+          res.status(StatusCode.Success);
+        } catch (e) {
+          console.log(e);
+          res.status(StatusCode.UndefinedError).json({
+            message: ERRORS.UNDEFINED_ERROR,
+          });
+        }
+      }
+    }).catch(err => {
+      console.error(err);
+      res.status(StatusCode.UndefinedError).json({
+        message: ERRORS.UNDEFINED_ERROR,
+      });
+    });
+};
+
+export const toggleArticleRating = async (req, res) => {
+  const rating = req.query['rating'];
+  const postId = req.params.id;
+
+  await PostUserRating.findOneAndUpdate({
+    postId: postId,
+    userId: req.userId,
+  },
+  { $set: { rating: rating } },
+  { upsert: true },
+  ).exec()
+    .then(() => {
+      res.status(StatusCode.Success).json({});
+    });
+};
+
 
 const updateTag = async (mergedTags) => {
   for (const tag of mergedTags.allIds) {
@@ -291,9 +284,22 @@ const updateTag = async (mergedTags) => {
       { upsert: true },
     ).exec();
   }
-}
+};
 
-export const createPost = async (req, res) => {
+const mergeTags = (oldTags, newTags) => {
+  const forDelete = oldTags.filter(o => !newTags.includes(o));
+  const forUpdate = oldTags.filter(o => newTags.includes(o));
+  const forCreate = newTags.filter(n => !oldTags.includes(n));
+  const allIds = [...oldTags, ...newTags];
+  return {
+    forDelete,
+    forUpdate,
+    forCreate,
+    allIds,
+  };
+};
+
+export const createArticle = async (req, res) => {
   const file = req.file;
 
   const tags = JSON.parse(req.body.tags) instanceof Array
@@ -302,7 +308,7 @@ export const createPost = async (req, res) => {
 
   const mergedTags = mergeTags([], tags);
 
-  await updateTag(mergedTags)
+  await updateTag(mergedTags);
 
   const doc = new Post({
     title: req.body.title,
@@ -314,12 +320,12 @@ export const createPost = async (req, res) => {
 
   const newPost = await doc.save();
 
-  res.json({
+  res.status(StatusCode.Success).json({
     data: newPost,
   });
 };
 
-export const updatePost = async (req, res) => {
+export const updateArticle = async (req, res) => {
   const postId = req.params.id;
   const file = req.file;
 
@@ -327,45 +333,45 @@ export const updatePost = async (req, res) => {
     ? JSON.parse(req.body.tags) : [];
   const tagIds = tags.map(t => t._id);
 
-  const post = await Post.findById(postId)
+  await Post.findById(postId)
     .populate({
       path: 'tags',
       select: ['_id', 'value'],
     })
-    .exec();
+    .exec().then(async post => {
+      if (!post) {
+        return res.status(StatusCode.UndefinedError).json({
+          message: ERRORS.UNDEFINED_ERROR,
+        });
+      }
 
-  if (!post || !post._doc) {
-    return res.status(StatusCode.UndefinedError).json({
-      error: ERRORS.UNDEFINED_ERROR,
+      const mergedTags = mergeTags(post.tags, tags);
+
+      await updateTag(mergedTags);
+
+      await Post.updateOne(
+        { _id: postId },
+        {
+          title: req.body.title,
+          text: req.body.text,
+          imageId: file?.id,
+          tags: tagIds,
+        },
+      ).exec();
+
+      res.status(StatusCode.Success);
+
     });
-  }
-
-  const mergedTags = mergeTags(post._doc.tags, tags);
-
-  await updateTag(mergedTags)
-
-  await Post.updateOne(
-    { _id: postId },
-    {
-      title: req.body.title,
-      text: req.body.text,
-      imageId: file?.id,
-      tags: tagIds,
-    },
-  ).exec();
-
-  res.statusCode(StatusCode.Success);
 };
 
-export const deletePost = async (req, res) => {
+export const deleteArticle = async (req, res) => {
   const postId = req.params.id;
 
   Post.findOneAndDelete(
     { _id: postId },
   ).then((post) => {
     if (post) {
-      res.json({
-      });
+      res.json({});
     } else {
       res.status(StatusCode.NotFound).json({
         message: ERRORS.NOT_FOUND,
@@ -376,67 +382,6 @@ export const deletePost = async (req, res) => {
     res.status(StatusCode.UndefinedError).json({
       message: ERRORS.UNDEFINED_ERROR,
     });
-  });
-};
-
-export const getAllTags = async (req, res) => {
-  const tags = await Tag
-    .find()
-    .sort('-value')
-    .select(['_id', 'value'])
-    .exec();
-
-  res.json({
-    data: tags,
-  });
-};
-
-export const getPopularTags = async (req, res) => {
-  const tags = await Tag
-    .find()
-    .sort('-useCount')
-    .limit(4)
-    .exec();
-
-
-  res.json({
-    data: tags.filter(tag => tag.useCount > 0),
-  });
-};
-
-
-export const getPopularAuthors = async (req, res) => {
-  const authors = await User
-    .find()
-    .populate('postCount')
-    .limit(4)
-    .select(['_id', 'login', 'postCount'])
-    .sort('postCount')
-    .exec();
-
-
-  res.json({
-    data: authors.map(author => ({
-      _id: author._id,
-      value: author.login,
-      useCount: author.postCount,
-    })).filter(author => author.useCount > 0),
-  });
-};
-
-export const createComment = async (req, res) => {
-  const postId = req.params.id;
-
-  const doc = new Comment({
-    text: req.body.text,
-    userId: req.userId,
-    postId: postId,
-  });
-
-  const comment = await doc.save();
-
-  res.json({
-    data: comment,
   });
 };
 
@@ -453,17 +398,71 @@ export const deletePostImage = async (req, res, next) => {
   next();
 };
 
-const mergeTags = (oldTags, newTags) => {
-  const forDelete = oldTags.filter(o => !newTags.includes(o));
-  const forUpdate = oldTags.filter(o => newTags.includes(o));
-  const forCreate = newTags.filter(n => !oldTags.includes(n));
-  const allIds = [...oldTags, ...newTags];
-  return {
-    forDelete,
-    forUpdate,
-    forCreate,
-    allIds,
-  };
+// -----Tags-----
+
+export const getAllTags = async (req, res) => {
+  const tags = await Tag
+    .find()
+    .sort('-value')
+    .select(['_id', 'value'])
+    .exec();
+
+  res.status(StatusCode.Success).json({
+    data: tags,
+  });
+};
+
+export const getPopularTags = async (req, res) => {
+  const tags = await Tag
+    .find()
+    .sort('-useCount')
+    .limit(4)
+    .exec();
+
+
+  res.status(StatusCode.Success).json({
+    data: tags.filter(tag => tag.useCount > 0),
+  });
+};
+
+
+// -----Authors-----
+
+export const getPopularAuthors = async (req, res) => {
+  const authors = await User
+    .find()
+    .populate('postCount')
+    .limit(4)
+    .select(['_id', 'login', 'postCount'])
+    .sort('postCount')
+    .exec();
+
+
+  res.status(StatusCode.Success).json({
+    data: authors.map(author => ({
+      _id: author._id,
+      value: author.login,
+      useCount: author.postCount,
+    })).filter(author => author.useCount > 0),
+  });
+};
+
+// -----Comments-----
+
+export const createComment = async (req, res) => {
+  const postId = req.params.id;
+
+  const doc = new Comment({
+    text: req.body.text,
+    userId: req.userId,
+    postId: postId,
+  });
+
+  const comment = await doc.save();
+
+  res.status(StatusCode.Success).json({
+    data: comment,
+  });
 };
 
 export const toggleCommentRating = async (req, res) => {
@@ -478,25 +477,22 @@ export const toggleCommentRating = async (req, res) => {
   { upsert: true },
   ).exec()
     .then(() => {
-      res.json({
-      });
+      res.status(StatusCode.Success).json({});
     });
 };
 
-export const getUserPostComments = async (req, res) => {
+export const getUserArticleComments = async (req, res) => {
   const userId = req.query['userId'];
 
   await Post.find()
     .populate({
       path: 'userId',
-      populate: { path: 'avatar' },
     })
     .populate({
       path: 'comments',
       populate: [
         {
           path: 'userId',
-          populate: { path: 'avatar' },
         },
         { path: 'rating' },
         { path: 'userRating' },
@@ -510,7 +506,7 @@ export const getUserPostComments = async (req, res) => {
         post.comments = post.comments.filter(com => com.userId._id.toString() === userId);
       });
 
-      res.json({
+      res.status(StatusCode.Success).json({
         data: finData.filter(it => !!it.comments.length),
       });
     });
