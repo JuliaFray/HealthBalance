@@ -22,6 +22,7 @@ const UserSchema = new mongoose.Schema({
   },
   isVerified: { type: Boolean, default: false },
   avatarId: Number,
+  //Подписчики
   followers: {
     type: [mongoose.Schema.ObjectId],
     ref: 'User',

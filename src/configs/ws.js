@@ -121,3 +121,14 @@ export function sendMsg(clientId, type, data, msg) {
     clients[clientId].send(JSON.stringify({ type: type, data: data, msg: msg }));
   }
 }
+
+export function sendAboutOnlineStatus(userId) {
+  const json = { type: Events.AUTH_EVENT };
+
+  if (!userActivity.includes(userId)) {
+    userActivity.push(userId);
+  }
+  json.data = userActivity;
+
+  sendMessageToAllClients(json)
+}

@@ -1,10 +1,13 @@
 import express from 'express';
 
+import checkAuth from '#utils/checkAuth.js';
+
 import { getFoodById, getFoodList } from '../controllers/FatSecretController.js';
 import { enhanceHeaders } from '../utils/checkAuth.js';
 
 const router = express.Router();
 
+router.use(checkAuth);
 router.use(enhanceHeaders);
 
 router.get('/list', getFoodList);

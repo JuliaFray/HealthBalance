@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
-import UserFriends from './UserFriends.js';
+
 import Food from './Food.js';
+import UserFriends from './UserFriends.js';
 
 const DietPlanSchema = new mongoose.Schema({
   userId: {
@@ -37,13 +38,17 @@ const DietPlanSchema = new mongoose.Schema({
       type: Number,
       required: true,
     },
-    rating: {
+    planRating: {
       type: Number,
       required: true,
     },
   },
   planByDay: [{
     day: Number,
+    dayRating: {
+      type: Number,
+      required: true,
+    },
     portions: [{
       foodId: {
         type: mongoose.Schema.ObjectId,

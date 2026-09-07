@@ -26,6 +26,8 @@ import { EXPIRES_KEY, SECRET_KEY } from '#utils/constants.js';
 import * as ERRORS from '#utils/errors.js';
 import { NOT_FOUND_USER } from '#utils/errors.js';
 
+import { sendAboutOnlineStatus } from '../configs/ws.js';
+
 const __dirname = path.resolve(path.dirname(''));
 
 export const register = async (req, res) => {
@@ -140,6 +142,8 @@ export const status = async (req, res) => {
         message: ERRORS.NOT_FOUND,
       });
     }
+
+    sendAboutOnlineStatus(req.userId)
 
     res.status(StatusCode.Success).json({
       data: user,

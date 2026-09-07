@@ -1,3 +1,5 @@
+import { StatusCode } from '#enums/status-code.enum.ts';
+
 import { Events, EventsType, sendMsg } from '../configs/ws.js';
 import Comment from '../models/Comment.js';
 import Post from '../models/Post.js';
@@ -50,28 +52,26 @@ export const getAllUsers = async (req, res) => {
   });
 };
 
-export const getProfile = async (req, res) => {
-  const my = req.userId ? await User.findOne({ _id: { $in: req.userId } })
+export const getUserById = async (req, res) => {
+  const profile = req.params.id ? await User.findOne({ _id: { $in: req.params.id } })
     .populate('followers')
     .exec() : null;
 
-  if (!my) {
-    res.status(404).json({
-      resultCode: 1,
-      error: ERRORS.NOT_FOUND,
+  if (!profile) {
+    res.status(StatusCode.NotFound).json({
+      message: ERRORS.NOT_FOUND,
     });
     return;
   }
 
   const data = {
-    isFollowed: my.followers.map(f => f._id.toString()).includes(my._id.toString()),
-    avatar: my.avatar,
-    createdAt: my.createdAt,
-    ...my._doc,
+    isFollowed: profile.followers.map(f => f._id.toString()).includes(req.params.id.toString()),
+    avatar: profile.avatar,
+    createdAt: profile.createdAt,
+    ...profile._doc,
   };
 
-  res.json({
-    resultCode: 0,
+  res.status(StatusCode.Success).json({
     data: data,
   });
 };
@@ -97,17 +97,27 @@ export const getProfileStats = async (req, res) => {
     .find({ userId: { $in: req.params.id } })
     .exec();
 
-  let followers = await User.findById(req.params.id).populate('followers').exec();
+  let profile = await User.findById(req.params.id).populate('followers').exec();
+  const userId = req.userId;
+  let folowsCount = await User.find({ followers: { $in: [req.params.id] } }).exec();
 
   res.json({
     resultCode: 0,
     data: {
       posts: posts?.length,
       favorites: req.userId === req.params.id ? favorites?.filter(it => it.likes).length : undefined,
-      followers: followers?.followers.length,
+      followers: profile?.followers.length,
       rating: posts.reduce((sum, el) => sum + el.rating, 0) || 0,
       marks: req.userId === req.params.id ? marks.filter(it => it.rating).length || 0 : undefined,
+      //Комментарии
       comments: comments.length || 0,
+      //Подписчики
+      followersCount: profile?.followers.length,
+      //Подписки
+      folowsCount: folowsCount.length,
+      //Посты
+      postCount: posts?.length,
+      isFollowed: profile.followers.map(f => f._id.toString()).includes(userId.toString()),
     },
   });
 };
@@ -142,12 +152,12 @@ export const toggleFollow = async (req, res) => {
 
   let query;
   if (JSON.parse(isFollow)) {
-    query = { $addToSet: { followers: friendId } };
+    query = { $addToSet: { followers: userId } };
   } else {
-    query = { $pull: { followers: friendId } };
+    query = { $pull: { followers: userId } };
   }
-
-  const profile = await User.findOneAndUpdate({ _id: userId }, query).exec();
+  const fromProfile = await User.findById(userId).exec();
+  await User.findOneAndUpdate({ _id: friendId }, query).exec();
 
   if (JSON.parse(isFollow)) {
     sendMsg(
@@ -156,7 +166,7 @@ export const toggleFollow = async (req, res) => {
       null,
       {
         fromId: userId,
-        from: `${profile.login} `,
+        from: `${fromProfile.login} `,
         msg: 'Пользователь %s теперь подписан на Вас!',
         type: EventsType.FOLLOW,
       },
