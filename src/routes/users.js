@@ -22,7 +22,7 @@ router.put('/:id/change-avatar', changeAvatar)
 
 router.get('/:id', getUserById);
 router.get('/:id/stats', getProfileStats);
-router.post('/:id', deleteUserImage, upload.single('image'), updateProfile);
+router.put('/:id/change-profile', updateProfile);
 
 router.put('/:id/toggle-follow', toggleFollow);
 router.put('/:id/create-friend', createFriendLink);

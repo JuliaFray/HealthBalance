@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import * as nodemailer from 'nodemailer';
 
 import User from '#models/User.js';
+import UserConfig from '#models/UserConfig.js';
 import VerifyToken from '#models/VerifyToken.js';
 
 import type { ILoginResponse } from '#types/user.interface.ts';
@@ -135,7 +136,7 @@ export const login = async (req, res) => {
 
 export const status = async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
+    const user = await User.findById(req.userId).populate('config');
 
     if (!user) {
       return res.status(StatusCode.NotFound).json({
@@ -143,7 +144,7 @@ export const status = async (req, res) => {
       });
     }
 
-    sendAboutOnlineStatus(req.userId)
+    sendAboutOnlineStatus(req.userId);
 
     res.status(StatusCode.Success).json({
       data: user,

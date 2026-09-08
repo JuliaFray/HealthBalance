@@ -17,12 +17,17 @@ const UserConfig = new mongoose.Schema({
   gender: String,
   weight: Number,
   height: Number,
-  birthDate: Date,
+  age: Number,
   activityLevel: String,
+  goal: String,
   targets: {
     targetWeight: Number,
     targetDate: Date,
-    targetWater: Number
+    targetWater: Number,
+    targetCalories: Number,
+    targetProteins: Number,
+    targetFats: Number,
+    targetCarb: Number,
   }
 }, {
   timestamps: true,

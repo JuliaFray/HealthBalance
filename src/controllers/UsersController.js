@@ -1,3 +1,5 @@
+import UserConfig from '#models/UserConfig.js';
+
 import { StatusCode } from '#enums/status-code.enum.ts';
 
 import { Events, EventsType, sendMsg } from '../configs/ws.js';
@@ -57,6 +59,9 @@ export const getUserById = async (req, res) => {
     .populate('followers')
     .exec() : null;
 
+  const config = req.params.id ? await UserConfig.findOne({ userId: { $in: req.params.id } })
+    .exec() : null;
+
   if (!profile) {
     res.status(StatusCode.NotFound).json({
       message: ERRORS.NOT_FOUND,
@@ -69,6 +74,7 @@ export const getUserById = async (req, res) => {
     avatar: profile.avatar,
     createdAt: profile.createdAt,
     ...profile._doc,
+    ...config._doc
   };
 
   res.status(StatusCode.Success).json({
@@ -124,24 +130,34 @@ export const getProfileStats = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   const userId = req.params.id;
-  const file = req.file;
 
-  const profile = await User.findOneAndUpdate(
+  await User.findOneAndUpdate(
     { _id: userId },
+    { login: req.body.user.login },
+    { upsert: true },
+  )
+    .exec();
+
+  await UserConfig.findOneAndUpdate(
+    { userId: userId },
     {
-      login: req.body.login,
-      birthDate: req.body.birthDate,
-      city: req.body.city,
-      description: req.body.description,
-      avatarId: file?.id,
+      age: req.body.user.age,
+      gender: req.body.user.gender,
+      weight: req.body.user.weight,
+      height: req.body.user.height,
+      activityLevel: req.body.user.activityLevel,
+      goal: req.body.user.goal,
+      targets: {
+        targetWeight: req.body.user.targetWeight,
+        targetCalories: req.body.user.targetCalories,
+      },
     },
-    { returnDocument: 'after' },
+    { upsert: true },
   )
     .exec();
 
   res.json({
-    resultCode: 0,
-    data: profile,
+    resultCode: StatusCode.Success,
   });
 };
 

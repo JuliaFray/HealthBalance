@@ -25,6 +25,7 @@ export const getOneDiet = async (req, res) => {
 
   DietPlan.findOne({ _id: dietId })
     .populate({ path: 'userId', select: ['_id'], populate: { path: 'config' } })
+    .populate({path: 'planByDay.portions.foodId'})
     .then((diet) => {
       if (!diet) {
         res.status(404).json({
@@ -38,12 +39,12 @@ export const getOneDiet = async (req, res) => {
         resultCode: 0,
       });
     }).catch(err => {
-    console.error(err);
-    res.status(400).json({
-      error: ERRORS.UNDEFINED_ERROR,
-      resultCode: 1,
+      console.error(err);
+      res.status(400).json({
+        error: ERRORS.UNDEFINED_ERROR,
+        resultCode: 1,
+      });
     });
-  });
 };
 
 export const createPlan = async (req, res) => {
@@ -114,13 +115,13 @@ export const updateDietPlan = async (req, res) => {
     },
     { upsert: true },
   ).exec()
-    // .then(async diet => {
-    //   recalcFood(diet, update).then(() => {
-    //     res.json({
-    //       resultCode: 0,
-    //     });
-    //   });
-    // });
+  // .then(async diet => {
+  //   recalcFood(diet, update).then(() => {
+  //     res.json({
+  //       resultCode: 0,
+  //     });
+  //   });
+  // });
 };
 
 export const addFood = async (req, res) => {
