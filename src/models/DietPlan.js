@@ -55,8 +55,10 @@ const DietPlanSchema = new mongoose.Schema({
         ref: 'Food',
         required: true,
       },
-      meal: String,
-      weightG: Number,
+      portion: [{
+        meal: String,
+        weightG: Number,
+      }]
     }],
   }],
 }, {
@@ -64,13 +66,5 @@ const DietPlanSchema = new mongoose.Schema({
   toJSON: { virtuals: true },
   toObject: { virtuals: true },
 });
-
-// DietPlanSchema.virtual('foods', {
-//   ref: Food,
-//   localField: 'planByDay.portions.foodId',
-//   foreignField: '_id',
-// }).get(arr => {
-//   return Array.isArray(arr) ? arr.filter(val => val.isAgree) : [];
-// });
 
 export default mongoose.model('DietPlan', DietPlanSchema);

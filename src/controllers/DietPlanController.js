@@ -10,7 +10,7 @@ export const getAllDiets = async (req, res) => {
     { sort: { createdAt: -1 } },
   )
     .populate({ path: 'userId', select: ['_id'], populate: { path: 'config' } })
-    .populate({ path: 'planByDay.portions', populate: {path: 'foodId'} })
+    .populate({ path: 'planByDay.portions', populate: { path: 'foodId' } })
     .exec();
 
   res.json({
@@ -25,7 +25,7 @@ export const getOneDiet = async (req, res) => {
 
   DietPlan.findOne({ _id: dietId })
     .populate({ path: 'userId', select: ['_id'], populate: { path: 'config' } })
-    .populate({path: 'planByDay.portions.foodId'})
+    .populate({ path: 'planByDay.portions.foodId' })
     .then((diet) => {
       if (!diet) {
         res.status(404).json({
@@ -114,7 +114,7 @@ export const updateDietPlan = async (req, res) => {
       meals: update.meals,
     },
     { upsert: true },
-  ).exec()
+  ).exec();
   // .then(async diet => {
   //   recalcFood(diet, update).then(() => {
   //     res.json({
@@ -166,26 +166,26 @@ export const removeFood = async (req, res) => {
   const foodId = req.body.foodId;
   const day = req.body.day;
 
-  await DietPlan.findByIdAndUpdate(
-    dietPlanId,
-    {
-      $pull: {
-        'foods.$[foodIdx].days': { 'day': day },
-      },
-    },
-    {
-      arrayFilters: [
-        { 'foodIdx._id': foodId },
-      ],
-      new: true,
-    },
-  )
-    .exec()
-    .then(() => {
-      res.json({
-        resultCode: 0,
-      });
-    });
+  // 1. Находим план питания по ID
+  const dietPlan = await DietPlan.findById(dietPlanId)
+    .populate({ path: 'userId', select: ['_id'], populate: { path: 'config' } })
+    .populate({ path: 'planByDay.portions.foodId' });
+
+  if (!dietPlan) {
+    throw new Error('План питания не найден');
+  }
+
+  // 2. Находим нужный день в массиве planByDay
+  const dayPlan = dietPlan.planByDay.find(d => d.day === Number(day));
+  console.log(dayPlan.portions, foodId)
+  dayPlan.portions = dayPlan.portions.filter(p => p.foodId.id !== foodId)
+  console.log(dayPlan.portions)
+  // 3. Сохраняем документ в базу данных
+  await dietPlan.save();
+
+  res.json({
+    resultCode: 0,
+  });
 };
 
 export const updateWeight = async (req, res) => {
@@ -202,28 +202,47 @@ export const updateWeight = async (req, res) => {
     commonRating = dayRating.reduce((acc, curr) => acc + curr.rating, 0) / dayRating.length;
   }
 
-  return await DietPlan.findByIdAndUpdate(
-    dietPlanId,
-    {
-      $set: {
-        'foods.$[foodIdx].days.$[dayIdx].meals.$[mealIdx].volume': Number(newVal),
-        'foods.$[foodIdx].days.$[dayIdx].meals.$[mealIdx].meal': meal,
-        'stat.rating': commonRating,
-      },
-    },
-    {
-      arrayFilters: [
-        { 'foodIdx._id': foodId },
-        { 'dayIdx.day': currentDay },
-        { 'mealIdx.meal': meal },
-      ],
-      new: true,
-    },
-  )
-    .populate({ path: 'userId', select: ['_id'], populate: { path: 'healthInfo' } })
-    .exec();
-};
+  // 1. Находим план питания по ID
+  const dietPlan = await DietPlan.findById(dietPlanId)
+    .populate({ path: 'userId', select: ['_id'], populate: { path: 'config' } })
+    .populate({ path: 'planByDay.portions.foodId' });
 
+  if (!dietPlan) {
+    throw new Error('План питания не найден');
+  }
+
+  // 2. Находим нужный день в массиве planByDay
+  const dayPlan = dietPlan.planByDay.find(d => d.day === Number(currentDay));
+
+  if (dayPlan) {
+    // Обновляем рейтинг дня в любом случае
+    dayPlan.dayRating = commonRating;
+
+    // 3. Ищем, есть ли уже порция с таким foodId
+    const portionByFoodId = dayPlan.portions.find(p => p.foodId.id.toString() === foodId.toString()).portion;
+
+    if (portionByFoodId) {
+      // 4. Ищем, есть ли уже порция с таким meal
+      const existingPortion = portionByFoodId.find(p => p.meal === meal);
+
+      if (existingPortion) {
+        // ОБНОВЛЕНИЕ: если нашли, правим поля
+        existingPortion.weightG = Number(newVal);
+      } else {
+      // СОЗДАНИЕ: если не нашли, добавляем новую порцию в массив
+        portionByFoodId.push({
+          meal: meal,
+          weightG: Number(newVal),
+        });
+      }
+    }
+
+    // 5. Сохраняем документ в базу данных
+    await dietPlan.save();
+
+    return dietPlan;
+  }
+}
 
 export const deleteDietPlan = async (req, res) => {
   const dietPlanId = req.params.id;

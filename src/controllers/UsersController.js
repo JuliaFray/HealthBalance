@@ -68,13 +68,18 @@ export const getUserById = async (req, res) => {
     });
     return;
   }
+  let configDoc = {};
+
+  if (config) {
+    configDoc = {...config._doc}
+  }
 
   const data = {
     isFollowed: profile.followers.map(f => f._id.toString()).includes(req.params.id.toString()),
     avatar: profile.avatar,
     createdAt: profile.createdAt,
     ...profile._doc,
-    ...config._doc
+    ...configDoc
   };
 
   res.status(StatusCode.Success).json({
