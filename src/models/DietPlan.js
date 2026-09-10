@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 
-import Food from './Food.js';
-import UserFriends from './UserFriends.js';
+import Product from './Product.js';
 
 const DietPlanSchema = new mongoose.Schema({
   userId: {
@@ -22,7 +21,7 @@ const DietPlanSchema = new mongoose.Schema({
     required: true,
   },
   statResult: {
-    cal: {
+    calories: {
       type: Number,
       required: true,
     },
@@ -34,7 +33,7 @@ const DietPlanSchema = new mongoose.Schema({
       type: Number,
       required: true,
     },
-    carb: {
+    carbs: {
       type: Number,
       required: true,
     },
@@ -52,13 +51,13 @@ const DietPlanSchema = new mongoose.Schema({
     portions: [{
       foodId: {
         type: mongoose.Schema.ObjectId,
-        ref: 'Food',
+        ref: 'Product',
         required: true,
       },
       portion: [{
         meal: String,
         weightG: Number,
-      }]
+      }],
     }],
   }],
 }, {

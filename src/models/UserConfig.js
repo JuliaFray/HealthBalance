@@ -24,10 +24,12 @@ const UserConfig = new mongoose.Schema({
     targetWeight: Number,
     targetDate: Date,
     targetWater: Number,
-    targetCalories: Number,
-    targetProteins: Number,
-    targetFats: Number,
-    targetCarb: Number,
+    targetStat: {
+      calories: Number,
+      proteins: Number,
+      carbs: Number,
+      fats: Number,
+    }
   }
 }, {
   timestamps: true,

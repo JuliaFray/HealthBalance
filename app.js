@@ -1,24 +1,24 @@
-import 'dotenv/config'
-
-import path from 'path';
-
 import cors from 'cors';
+import 'dotenv/config';
 import express from 'express';
 import createError from 'http-errors';
 import logger from 'morgan';
 
-import * as mongo from './src/configs/mongo.js'
+import path from 'path';
+
+import * as mongo from './src/configs/mongo.js';
 import authRouter from './src/routes/auth.js';
 import dialogRouter from './src/routes/dialog.js';
+import diaryRouter from './src/routes/diary.js';
 import dietRouter from './src/routes/diet.js';
-import foodRouter from './src/routes/food.js'
+import fatsecretRouter from './src/routes/fatsecret.js';
+import foodRouter from './src/routes/food.js';
 import indexRouter from './src/routes/index.js';
+import openFoodRouter from './src/routes/openFood.js';
 import postsRouter from './src/routes/posts.js';
 import profileRouter from './src/routes/profile.js';
 import usersRouter from './src/routes/users.js';
-import diaryRouter from './src/routes/diary.js';
-import fatsecretRouter from './src/routes/fatsecret.js';
-import globalErrorHandler from './src/utils/handleErrors.js'
+import globalErrorHandler from './src/utils/handleErrors.js';
 
 const __dirname = path.resolve(path.dirname(''));
 
@@ -28,7 +28,7 @@ const mongoDb = mongo;
 app.use(logger('dev'));
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 
 // Routing
 app.use('/', indexRouter);
@@ -39,9 +39,10 @@ app.use('/profile', profileRouter);
 app.use('/dialog', dialogRouter);
 app.use('/diet', dietRouter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/v1/food', foodRouter);
-app.use('/v2/food', fatsecretRouter);
 app.use('/diary', diaryRouter);
+app.use('/v1/food', openFoodRouter);
+app.use('/v2/food', fatsecretRouter);
+app.use('/v3/food', foodRouter);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

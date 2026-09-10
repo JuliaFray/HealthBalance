@@ -11,7 +11,6 @@ export default (req, res, next) => {
 
       req.userId = decoded._id;
       req.token = token;
-      console.log(decoded._id)
       next();
     } catch (err) {
       console.log(err)
