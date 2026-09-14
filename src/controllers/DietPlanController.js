@@ -103,6 +103,7 @@ const recalcFood = async (diet, updateBody) => {
   return diet;
 };
 
+
 export const updateDietPlan = async (req, res) => {
   const dietPlanId = req.params.id;
 

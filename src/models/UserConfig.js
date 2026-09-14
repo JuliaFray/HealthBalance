@@ -27,8 +27,11 @@ const UserConfig = new mongoose.Schema({
     targetStat: {
       calories: Number,
       proteins: Number,
+      proteinsG: Number,
       carbs: Number,
+      carbsG: Number,
       fats: Number,
+      fatsG: Number,
     }
   }
 }, {

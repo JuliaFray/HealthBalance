@@ -17,13 +17,15 @@ export const getFoodList = async (req, res) => {
   const where: FilterQuery<any>[] = [];
 
   if (searchValue) {
-    searchValue = searchValue.replaceAll('.', '\\.');
-    where.push({ name: { $regex: searchValue, $options: 'i' } });
+    const searchValues = searchValue.replaceAll('.', '\\.').split(' ');
+    searchValues.forEach(sv => {
+      where.push({ name: { $regex: sv, $options: 'i' } });
+    })
   }
 
-  let query: FilterQuery<any> = where.length ? { $and: [...where] } : {};
+  let query: FilterQuery<any> = where.length ? { $or: [...where] } : {};
 
-  const products = await Product.find(query, {}, { sort: { createdAt: -1 } })
+  const products = await Product.find(query, {}, { sort: { name: -1 } })
     .limit(offsetAndLimit.limit)
     .skip(offsetAndLimit.offset)
     .exec();

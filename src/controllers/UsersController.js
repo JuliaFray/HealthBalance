@@ -157,8 +157,11 @@ export const updateProfile = async (req, res) => {
         targetStat: {
           calories: req.body.user.calories,
           proteins: req.body.user.proteins,
+          proteinsG: req.body.user.proteinsG,
           carbs: req.body.user.carbs,
+          carbsG: req.body.user.carbsG,
           fats: req.body.user.fats,
+          fatsG: req.body.user.fatsG,
         }
       },
     },

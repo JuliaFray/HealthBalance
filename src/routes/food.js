@@ -12,6 +12,7 @@ router.use(enhanceHeaders);
 
 router.get('/list', getFoodList);
 router.get('/:id', getFoodById);
+
 // router.post('/:id', createFood);
 // router.put('/:id', editFood);
 

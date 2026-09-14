@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import Product from './Product.js';
+
 const DiarySchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.ObjectId,
@@ -10,11 +12,13 @@ const DiarySchema = new mongoose.Schema({
   portions: [{
     foodId: {
       type: mongoose.Schema.ObjectId,
-      ref: 'Food',
+      ref: 'Product',
       required: true,
     },
-    meal: String,
-    weightG: Number,
+    portion: [{
+      meal: String,
+      weightG: Number,
+    }],
   }],
 }, {
   timestamps: true,
