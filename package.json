@@ -2,11 +2,14 @@
   "name": "HealthBalance",
   "version": "2.0.0",
   "description": "HealthBalance",
-  "main": "www.js",
   "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
-    "start": "node ./src/bin/www.js",
-    "start:dev": "nodemon ./src/bin/www.js"
+    "start": "node server.js",
+    "start:dev": "tsc && node server.js",
+    "build": ""
   },
   "author": "gromovajs",
   "license": "ISC",
@@ -59,7 +62,7 @@
     "eslint-plugin-unused-imports": "^4.1.4",
     "prettier": "3.5.3",
     "tslib": "^2.8.1",
-    "typescript": "^7.0.2"
+    "typescript": "7.0.2"
   },
   "imports": {
     "#utils/*.js": "./src/utils/*.js",

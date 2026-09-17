@@ -1,17 +1,15 @@
 import type { FilterQuery } from 'mongoose';
 
-import Comment from '#models/Comment.js';
-import CommentUserRating from '#models/CommentUserRating.js';
-import Post from '#models/Post.js';
-import PostUserFavorite from '#models/PostUserFavorite.js';
-import PostUserRating from '#models/PostUserRating.js';
-import Tag from '#models/Tag.js';
-import User from '#models/User.js';
-
-import { StatusCode } from '#enums/status-code.enum.ts';
-
-import * as ERRORS from '#utils/errors.js';
-import { calculateOffsetAndLimit } from '#utils/helper.js';
+import { StatusCode } from '../enums/status-code.enum.ts';
+import Comment from '../models/Comment.js';
+import CommentUserRating from '../models/CommentUserRating.js';
+import Post from '../models/Post.js';
+import PostUserFavorite from '../models/PostUserFavorite.js';
+import PostUserRating from '../models/PostUserRating.js';
+import Tag from '../models/Tag.js';
+import User from '../models/User.js';
+import * as ERRORS from '../utils/errors.js';
+import { calculateOffsetAndLimit } from '../utils/helper.js';
 
 
 import { removeFile } from './FileController.js';
@@ -438,10 +436,12 @@ export const getPopularAuthors = async (req, res) => {
     .exec();
 
 
+
   res.status(StatusCode.Success).json({
     data: authors.map(author => ({
       _id: author._id,
       value: author.login,
+      // @ts-ignore
       useCount: author.postCount,
     })).filter(author => author.useCount > 0),
   });
@@ -503,11 +503,11 @@ export const getUserArticleComments = async (req, res) => {
       const finData = data;
 
       finData.forEach(post => {
+        // @ts-ignore
         post.comments = post.comments.filter(com => com.userId._id.toString() === userId);
       });
 
-      res.status(StatusCode.Success).json({
-        data: finData.filter(it => !!it.comments.length),
-      });
+      // @ts-ignore
+      res.status(StatusCode.Success).json({ data: finData.filter(it => !!it.comments.length), });
     });
 };

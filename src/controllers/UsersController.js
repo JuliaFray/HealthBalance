@@ -2,7 +2,7 @@ import UserConfig from '#models/UserConfig.js';
 
 import { StatusCode } from '#enums/status-code.enum.ts';
 
-import { Events, EventsType, sendMsg } from '../configs/ws.js';
+import { Events, EventsType, sendMsg } from '../../server.js';
 import Comment from '../models/Comment.js';
 import Post from '../models/Post.js';
 import PostUserRating from '../models/PostUserRating.js';

@@ -6,14 +6,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import * as nodemailer from 'nodemailer';
 
-import User from '#models/User.js';
-import UserConfig from '#models/UserConfig.js';
-import VerifyToken from '#models/VerifyToken.js';
-
-import type { ILoginResponse } from '#types/user.interface.ts';
-
-import { StatusCode } from '#enums/status-code.enum.ts';
-
+import { sendAboutOnlineStatus } from '../../server.js';
 import {
   ACCOUNT_IS_VERIFIED,
   CONFIRM_EMAIL,
@@ -21,13 +14,14 @@ import {
   EMAIL_IS_VERIFIED,
   LINK_IS_EXPIRED,
   USER_EXISTS,
-} from '#constants/text.ts';
-
-import { EXPIRES_KEY, SECRET_KEY } from '#utils/constants.js';
-import * as ERRORS from '#utils/errors.js';
-import { NOT_FOUND_USER } from '#utils/errors.js';
-
-import { sendAboutOnlineStatus } from '../configs/ws.js';
+} from '../constants/text.ts';
+import { StatusCode } from '../enums/status-code.enum.ts';
+import User from '../models/User.js';
+import VerifyToken from '../models/VerifyToken.js';
+import type { ILoginResponse } from '../types/user.interface.js';
+import { EXPIRES_KEY, SECRET_KEY } from '../utils/constants.js';
+import * as ERRORS from '../utils/errors.js';
+import { NOT_FOUND_USER } from '../utils/errors.js';
 
 const __dirname = path.resolve(path.dirname(''));
 

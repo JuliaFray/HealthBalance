@@ -1,12 +1,10 @@
 import type { FilterQuery } from 'mongoose';
 import fetch from 'node-fetch';
 
-import Post from '#models/Post.js';
-import Product from '#models/Product.js';
-
-import { StatusCode } from '#enums/status-code.enum.ts';
-
-import { calculateOffsetAndLimit } from '#utils/helper.js';
+import { StatusCode } from '../enums/status-code.enum.ts';
+import Post from '../models/Post.js';
+import Product from '../models/Product.js';
+import { calculateOffsetAndLimit } from '../utils/helper.js';
 
 export const getFoodList = async (req, res) => {
   let searchValue = req.query['search_expression'];

@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
-    "rootDir": ".",
     "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./",
     "lib": [
       "dom",
       "dom.iterable",
@@ -14,20 +17,16 @@
     "noImplicitAny": false,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": false,
     "jsx": "react-jsx",
     "skipDefaultLibCheck": true,
     "strictPropertyInitialization": false,
-    "downlevelIteration": true,
     "importHelpers": true,
     "noFallthroughCasesInSwitch": true,
     "useDefineForClassFields": true,
-    "ignoreDeprecations": "6.0",
-    "baseUrl": "src",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "paths": {
       "#models/*": [
         "./models/*"
@@ -47,8 +46,9 @@
       "public": [
         "./../public"
       ]
-    }
+    },
   },
+  "include": ["api/**/*", "src/**/*"],
   "strict": true,
   "noUnusedLocals": true,
   "noUnusedParameters": true,

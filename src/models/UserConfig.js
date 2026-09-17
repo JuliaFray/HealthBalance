@@ -41,4 +41,4 @@ const UserConfig = new mongoose.Schema({
 });
 
 
-export default mongoose.model('UserConfig', UserConfig);
+export default mongoose.models.UserConfig || mongoose.model('UserConfig', UserConfig);

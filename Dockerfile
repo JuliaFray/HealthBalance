@@ -13,4 +13,4 @@ RUN npm install
 expose 8000
 
 # Define the entry point for the container
-CMD ["node", "src/bin/www.js"]
+CMD ["node", "src/api/server.js"]
