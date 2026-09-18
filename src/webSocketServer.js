@@ -1,0 +1,134 @@
+import { saveMessage } from './controllers/DialogController.js';
+import { updateWeight } from './controllers/DietPlanController.js';
+import { server } from './server.js';
+
+import { WebSocketServer } from 'ws';
+
+export const Events = {
+  USER_EVENT: 'USER_EVENT',
+  LOGOUT_EVENT: 'LOGOUT_EVENT',
+  AUTH_EVENT: 'AUTH_EVENT',
+  FOLLOW_EVENT: 'FOLLOW_EVENT',
+  FRIEND_EVENT: 'FRIEND_EVENT',
+  MSG_EVENT: 'MSG_EVENT',
+  CHANGE_WEIGHT_EVENT: 'CHANGE_WEIGHT_EVENT',
+};
+
+export const EventsType = {
+  FOLLOW: 'FOLLOW',
+  FRIEND: 'FRIEND',
+  MSG: 'MSG',
+};
+
+const clients = {};
+let userActivity = [];
+
+export const connectWebSocket = (server) => {
+  const wsServer = new WebSocketServer({ server, perMessageDeflate: false });
+
+  // Handle new client connections
+  wsServer.on('connection', (connection, req) => {
+    const regex = new RegExp('[0-9a-f]{24}');
+    const res = regex.exec(req.url);
+
+    const userId = res ? res[0] : null;
+    if (userId) {
+      clients[userId] = connection;
+      connection.on('message', (message) => processReceivedMessage(message));
+      connection.on('close', (message) => handleClientDisconnection(message, userId));
+    }
+
+  });
+
+  wsServer.on('listening', () => {
+    console.log('WS OK');
+  });
+};
+
+
+// Handle incoming messages from clients
+function processReceivedMessage(message) {
+  const dataFromClient = JSON.parse(message.toString());
+  const json = { type: dataFromClient.type };
+
+  switch (dataFromClient.type) {
+  case Events.USER_EVENT:
+    if (!userActivity.includes(dataFromClient.id)) {
+      userActivity.push(dataFromClient.id);
+    }
+    json.data = userActivity;
+    break;
+  case Events.AUTH_EVENT:
+    if (!userActivity.includes(dataFromClient.id)) {
+      userActivity.push(dataFromClient.id);
+    }
+    json.data = userActivity;
+    break;
+  case Events.LOGOUT_EVENT:
+    userActivity = userActivity.filter(it => it !== dataFromClient.id).filter(it => !!it);
+    json.data = userActivity;
+    break;
+  case Events.MSG_EVENT:
+
+    saveMessage(dataFromClient.msg)
+      .then((data) => {
+        sendMsg(dataFromClient.msg.to, dataFromClient.type, data,
+          {
+            fromId: dataFromClient.msg.from,
+            from: `${data.from.login}`,
+            msg: 'Пользователь %s отправил Вам сообщение!',
+            type: EventsType.MSG,
+          });
+        sendMsg(dataFromClient.msg.from, dataFromClient.type, data, null);
+      });
+
+    return;
+  case Events.CHANGE_WEIGHT_EVENT:
+    updateWeight(dataFromClient).then(updatedDiet => {
+      sendMsg(dataFromClient.authId, dataFromClient.type, updatedDiet, null);
+    });
+    break;
+  default:
+    json.data = userActivity;
+    break;
+  }
+
+  sendMessageToAllClients(json);
+}
+
+// Handle disconnection of a client
+function handleClientDisconnection(message, userId) {
+  const dataFromClient = JSON.parse(message.toString());
+  const json = { type: Events.LOGOUT_EVENT };
+  userActivity = userActivity.filter(it => it !== dataFromClient.id);
+  json.data = userActivity;
+
+  delete clients[userId];
+
+  sendMessageToAllClients(json);
+}
+
+function sendMessageToAllClients(msg) {
+  userActivity.forEach(user => {
+    if (clients[user]) {
+      clients[user].send(JSON.stringify(msg));
+    }
+  });
+}
+
+export function sendMsg(clientId, type, data, msg) {
+  if (clients[clientId]) {
+    clients[clientId].send(JSON.stringify({ type: type, data: data, msg: msg }));
+  }
+}
+
+export function sendAboutOnlineStatus(userId) {
+  const json = { type: Events.AUTH_EVENT };
+
+  if (!userActivity.includes(userId)) {
+    userActivity.push(userId);
+  }
+  json.data = userActivity;
+
+  sendMessageToAllClients(json);
+}
