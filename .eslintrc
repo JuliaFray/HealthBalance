@@ -5,23 +5,25 @@
   },
   "root": true,
   "extends": [
-    "eslint:recommended",
-    "next",
-    "next/core-web-vitals"
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended"
   ],
   "globals": {
     "LOGGER": true
   },
-  "plugins": ["import"],
-  "parser": "@babel/eslint-parser",
+  "plugins": ["import", "@typescript-eslint"],
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 2020,
+    "project": "./tsconfig.json",
     "sourceType": "module"
   },
   "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts", ".js"]
+    },
     "import/resolver": {
       "node": {
-        "extensions": [".js"],
+        "extensions": [".js", ".ts"],
         "path": ["src/*"]
       }
     }
@@ -48,36 +50,47 @@
       "warn",
       {
         "groups": [
-          "builtin",
-          "external",
-          "internal",
           "parent",
           "sibling",
-          "index"
+          "index",
+          "builtin",
+          "external",
+          "internal"
+
         ],
         "pathGroups": [
           {
-            "pattern": "#models/**",
+            "pattern": "@models/**",
             "group": "internal",
             "position": "before"
           },
           {
-            "pattern": "#types/**",
+            "pattern": "@types/**",
             "group": "internal",
             "position": "before"
           },
           {
-            "pattern": "#enums/**",
+            "pattern": "@enums/**",
             "group": "internal",
             "position": "before"
           },
           {
-            "pattern": "#constants/**",
+            "pattern": "@constants/**",
             "group": "internal",
             "position": "before"
           },
           {
-            "pattern": "#utils/**",
+            "pattern": "@utils/**",
+            "group": "internal",
+            "position": "before"
+          },
+          {
+            "pattern": "@controllers/**",
+            "group": "internal",
+            "position": "before"
+          },
+          {
+            "pattern": "@routes/**",
             "group": "internal",
             "position": "before"
           }

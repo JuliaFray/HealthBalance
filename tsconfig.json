@@ -1,63 +1,68 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "esnext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "outDir": "./dist",
-    "rootDir": "./",
     "lib": [
       "dom",
       "dom.iterable",
-      "esnext"
+      "es5"
     ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "noImplicitAny": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "src",
     "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": false,
     "isolatedModules": true,
-    "jsx": "react-jsx",
-    "skipDefaultLibCheck": true,
-    "strictPropertyInitialization": false,
-    "importHelpers": true,
+    "allowSyntheticDefaultImports": true,
+    "emitDeclarationOnly": false,
+    "noImplicitAny": false,
+    "noImplicitThis": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "useDefineForClassFields": true,
-    "allowImportingTsExtensions": true,
-    "noEmit": true,
     "paths": {
-      "#models/*": [
-        "./models/*"
-      ],
-      "#types/*": [
-        "./types/*"
-      ],
-      "#enums/*": [
-        "./enums/*"
-      ],
-      "#constants/*": [
+      "@constants/*": [
         "./constants/*"
       ],
-      "#utils/*": [
-        "./utils/*"
+      "@controllers/*": [
+        "./controllers/*"
       ],
-      "public": [
-        "./../public"
+      "@enums/*": [
+        "./enums/*"
+      ],
+      "@models/*": [
+        "./models/*"
+      ],
+      "@routes/*": [
+        "./routes/*"
+      ],
+      "@types/*": [
+        "./types/*"
+      ],
+      "@utils/*": [
+        "./utils/*"
       ]
-    },
+    }
   },
-  "include": ["api/**/*", "src/**/*"],
-  "strict": true,
-  "noUnusedLocals": true,
-  "noUnusedParameters": true,
+  "include": [
+    "src/**/*"
+  ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "dist"
   ],
   "ts-node": {
-    "compilerOptions": {
-      "module": "CommonJS"
-    }
+    "esm": true,
   }
 }

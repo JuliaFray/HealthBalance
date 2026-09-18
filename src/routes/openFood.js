@@ -1,9 +1,9 @@
-import express from 'express';
-
-import checkAuth from '#utils/checkAuth.js';
 
 import { getFoodById, getFoodList } from '../controllers/OpenFoodController.js';
+import checkAuth from '../utils/checkAuth.js';
 import { enhanceHeaders } from '../utils/checkAuth.js';
+
+import express from 'express';
 
 const router = express.Router();
 

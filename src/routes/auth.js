@@ -1,8 +1,9 @@
-import express from 'express';
 
-import { confirmEmail, login, register, resendLink, status } from '../controllers/AuthController.ts';
+import { confirmEmail, login, register, resendLink, status } from '../controllers/AuthController.js';
 import checkAuth from '../utils/checkAuth.js';
 import { loginValidation, registerValidation } from '../utils/validation.js';
+
+import express from 'express';
 
 const router = express.Router();
 

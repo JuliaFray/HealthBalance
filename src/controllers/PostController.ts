@@ -1,6 +1,4 @@
-import type { FilterQuery } from 'mongoose';
-
-import { StatusCode } from '../enums/status-code.enum.ts';
+import { StatusCode } from '../enums/status-code.js';
 import Comment from '../models/Comment.js';
 import CommentUserRating from '../models/CommentUserRating.js';
 import Post from '../models/Post.js';
@@ -8,11 +6,12 @@ import PostUserFavorite from '../models/PostUserFavorite.js';
 import PostUserRating from '../models/PostUserRating.js';
 import Tag from '../models/Tag.js';
 import User from '../models/User.js';
+import type { IArticle } from '../types/article.js';
+import type { IUser, IUserStats } from '../types/user.js';
 import * as ERRORS from '../utils/errors.js';
 import { calculateOffsetAndLimit } from '../utils/helper.js';
 
-
-import { removeFile } from './FileController.js';
+import type { FilterQuery } from 'mongoose';
 
 // -----Articles-----
 
@@ -61,10 +60,10 @@ export const getAllArticles = async (req, res) => {
     }
   }
 
-  let query: FilterQuery<any> = where.length ? { $and: [...where] } : {};
+  const query: FilterQuery<any> = where.length ? { $and: [...where] } : {};
 
   let count = await Post.countDocuments(query).exec();
-  let offsetAndLimit = calculateOffsetAndLimit(currentPage);
+  const offsetAndLimit = calculateOffsetAndLimit(currentPage);
 
   let articles;
 
@@ -383,18 +382,18 @@ export const deleteArticle = async (req, res) => {
   });
 };
 
-export const deletePostImage = async (req, res, next) => {
-  const postId = req.params.id;
-  const file = req.file;
-
-  const post = await Post.findOne({ _id: postId })
-    .populate('image').exec();
-
-  if (!!post?.imageId && (!file || post.imageId !== file.id)) {
-    await removeFile(post.imageId);
-  }
-  next();
-};
+// export const deletePostImage = async (req, res, next) => {
+//   const postId = req.params.id;
+//   const file = req.file;
+//
+//   const post = await Post.findOne({ _id: postId })
+//     .populate('image').exec();
+//
+//   if (!!post?.imageId && (!file || post.imageId !== file.id)) {
+//     await removeFile(post.imageId);
+//   }
+//   next();
+// };
 
 // -----Tags-----
 
@@ -436,14 +435,12 @@ export const getPopularAuthors = async (req, res) => {
     .exec();
 
 
-
   res.status(StatusCode.Success).json({
-    data: authors.map(author => ({
+    data: (authors as unknown as Partial<IUser & IUserStats>[]).map((author) => ({
       _id: author._id,
       value: author.login,
-      // @ts-ignore
       useCount: author.postCount,
-    })).filter(author => author.useCount > 0),
+    })).filter(author => !!author.useCount && author.useCount > 0),
   });
 };
 
@@ -500,14 +497,12 @@ export const getUserArticleComments = async (req, res) => {
     })
     .exec()
     .then(data => {
-      const finData = data;
+      const finData = data as unknown as IArticle[];
 
       finData.forEach(post => {
-        // @ts-ignore
-        post.comments = post.comments.filter(com => com.userId._id.toString() === userId);
+        post.comments = post.comments.filter(com => com.userId?._id.toString() === userId);
       });
 
-      // @ts-ignore
-      res.status(StatusCode.Success).json({ data: finData.filter(it => !!it.comments.length), });
+      res.status(StatusCode.Success).json({ data: finData.filter(it => !!it.comments.length) });
     });
 };

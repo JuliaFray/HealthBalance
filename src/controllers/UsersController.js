@@ -1,18 +1,13 @@
-import UserConfig from '#models/UserConfig.js';
-
-import { StatusCode } from '#enums/status-code.enum.ts';
-
-import { Events, EventsType, sendMsg } from '../../server.js';
+import { StatusCode } from '../enums/status-code.js';
 import Comment from '../models/Comment.js';
 import Post from '../models/Post.js';
 import PostUserRating from '../models/PostUserRating.js';
 import User from '../models/User.js';
+import UserConfig from '../models/UserConfig.js';
 import UserFriends from '../models/UserFriends.js';
 import * as ERRORS from '../utils/errors.js';
 import { calculateOffsetAndLimit } from '../utils/helper.js';
-
-import { removeFile } from './FileController.js';
-
+import { Events, EventsType, sendMsg } from '../webSocketServer.js';
 
 export const getAllUsers = async (req, res) => {
 
@@ -71,7 +66,7 @@ export const getUserById = async (req, res) => {
   let configDoc = {};
 
   if (config) {
-    configDoc = {...config._doc}
+    configDoc = { ...config._doc };
   }
 
   const data = {
@@ -79,7 +74,7 @@ export const getUserById = async (req, res) => {
     avatar: profile.avatar,
     createdAt: profile.createdAt,
     ...profile._doc,
-    ...configDoc
+    ...configDoc,
   };
 
   res.status(StatusCode.Success).json({
@@ -162,7 +157,7 @@ export const updateProfile = async (req, res) => {
           carbsG: req.body.user.carbsG,
           fats: req.body.user.fats,
           fatsG: req.body.user.fatsG,
-        }
+        },
       },
     },
     { upsert: true },
@@ -267,17 +262,17 @@ export const toggleFriend = async (req, res) => {
   }
 };
 
-export const deleteUserImage = async (req, res, next) => {
-  const userId = req.params.id;
-  const file = req.file;
-
-  const profile = await User.findOne({ _id: userId }).exec();
-
-  if (!!profile?.avatarId && (!file || profile.avatarId !== file.id)) {
-    await removeFile(profile.avatarId);
-  }
-  next();
-};
+// export const deleteUserImage = async (req, res, next) => {
+//   const userId = req.params.id;
+//   const file = req.file;
+//
+//   const profile = await User.findOne({ _id: userId }).exec();
+//
+//   if (!!profile?.avatarId && (!file || profile.avatarId !== file.id)) {
+//     await removeFile(profile.avatarId);
+//   }
+//   next();
+// };
 
 export const getFriendNotifications = async (req, res) => {
   await UserFriends.find({

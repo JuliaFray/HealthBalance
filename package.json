@@ -1,33 +1,31 @@
 {
-  "name": "HealthBalance",
-  "version": "2.0.0",
+  "name": "health-balance",
+  "version": "3.0.0",
   "description": "HealthBalance",
-  "type": "module",
   "engines": {
     "node": "24.x"
   },
+  "type": "module",
+  "main": "src/server.ts",
   "scripts": {
-    "start": "node server.js",
-    "start:dev": "tsc && node server.js",
-    "build": ""
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "lint": "eslint ."
   },
   "author": "gromovajs",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/translate": "^9.2.0",
-    "@iamtraction/google-translate": "^2.0.1",
+    "@types/express": "^5.0.6",
     "bcrypt": "^5.1.1",
-    "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "debug": "^4.3.4",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
-    "gridfs-stream": "^1.1.1",
     "http-errors": "^2.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^5.9.1",
-    "mongoose": "^8.2.2",
+    "mongoose": "^8.1.1",
     "mongoose-unique-validator": "^5.0.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.2",
@@ -37,38 +35,47 @@
     "nodemailer": "^6.8.0",
     "nodemon": "^3.0.3",
     "request": "^2.88.2",
-    "uuid": "^9.0.1",
     "ws": "^8.16.0"
   },
   "nodemonConfig": {
     "watch": [
       "src/*",
       "public/*"
-    ],
-    "ignore": [
-      "**/__tests__/**",
-      "*.test.js",
-      "*.spec.js"
     ]
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.16.5",
     "@babel/preset-env": "^7.16.8",
+    "@babel/preset-typescript": "^7.0.2",
     "@eslint/js": "^8.57.1",
-    "@types/node": "^26.1.2",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "18.14.0",
+    "@types/nodemailer": "^8.0.2",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^5.33.1",
+    "@typescript-eslint/parser": "^5.33.1",
     "eslint": "8.22.0",
     "eslint-config-next": "12.3.7",
     "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-unused-imports": "^4.1.4",
+    "eslint-plugin-prettier": "^3.1.1",
+    "eslint-plugin-unused-imports": "^4.2.0",
     "prettier": "3.5.3",
     "tslib": "^2.8.1",
-    "typescript": "7.0.2"
+    "tsx": "^4.23.13",
+    "typescript": "^5.0.2"
   },
   "imports": {
-    "#utils/*.js": "./src/utils/*.js",
-    "#models/*.js": "./src/models/*.js",
-    "#types/*": "./src/types/*",
-    "#enums/*": "./src/enums/*",
-    "#constants/*": "./src/constants/*"
+    "@constants/*": "./src/constants/*",
+    "@controllers/*": "./src/controllers/*",
+    "@enums/*": "./src/enums/*",
+    "@models/*": "./src/models/*",
+    "@routes/*": "./src/routes/*",
+    "@types/*": "./src/types/*",
+    "@utils/*": "./src/utils/*"
   }
 }

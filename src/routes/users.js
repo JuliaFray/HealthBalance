@@ -1,15 +1,18 @@
-import express from 'express';
-
-import upload from '#utils/gridFsStorage.js';
 
 import {
-  changeAvatar, createFriendLink,
-  deleteUserImage,
-  getAllUsers, getFriendNotifications,
+  changeAvatar,
+  createFriendLink,
+  getAllUsers,
+  getFriendNotifications,
   getProfileStats,
-  getUserById, toggleFollow, toggleFriend, updateProfile,
+  getUserById,
+  toggleFollow,
+  toggleFriend,
+  updateProfile,
 } from '../controllers/UsersController.js';
-import checkAuth, {enhanceHeaders} from '../utils/checkAuth.js';
+import checkAuth, { enhanceHeaders } from '../utils/checkAuth.js';
+
+import express from 'express';
 
 const router = express.Router();
 
@@ -18,7 +21,7 @@ router.use(enhanceHeaders);
 
 router.get('/', getAllUsers);
 router.post('/', getAllUsers);
-router.put('/:id/change-avatar', changeAvatar)
+router.put('/:id/change-avatar', changeAvatar);
 
 router.get('/:id', getUserById);
 router.get('/:id/stats', getProfileStats);

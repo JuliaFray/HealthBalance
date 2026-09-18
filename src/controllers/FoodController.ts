@@ -1,16 +1,16 @@
-import type { FilterQuery } from 'mongoose';
-import fetch from 'node-fetch';
-
-import { StatusCode } from '../enums/status-code.enum.ts';
-import Post from '../models/Post.js';
+import { StatusCode } from '../enums/status-code.js';
 import Product from '../models/Product.js';
 import { calculateOffsetAndLimit } from '../utils/helper.js';
 
+import type { FilterQuery } from 'mongoose';
+import fetch from 'node-fetch';
+
+
 export const getFoodList = async (req, res) => {
-  let searchValue = req.query['search_expression'];
+  const searchValue = req.query['search_expression'];
   const currentPage = req.query['page'];
 
-  let offsetAndLimit = calculateOffsetAndLimit(currentPage);
+  const offsetAndLimit = calculateOffsetAndLimit(currentPage);
 
   const where: FilterQuery<any>[] = [];
 
@@ -18,17 +18,17 @@ export const getFoodList = async (req, res) => {
     const searchValues = searchValue.replaceAll('.', '\\.').split(' ');
     searchValues.forEach(sv => {
       where.push({ name: { $regex: sv, $options: 'i' } });
-    })
+    });
   }
 
-  let query: FilterQuery<any> = where.length ? { $or: [...where] } : {};
+  const query: FilterQuery<any> = where.length ? { $or: [...where] } : {};
 
   const products = await Product.find(query, {}, { sort: { name: -1 } })
     .limit(offsetAndLimit.limit)
     .skip(offsetAndLimit.offset)
     .exec();
 
-  let count = await Product.countDocuments(query).exec();
+  const count = await Product.countDocuments(query).exec();
 
   res.status(StatusCode.Success).json({
     data: products,

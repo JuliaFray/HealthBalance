@@ -1,3 +1,20 @@
+import {
+  ACCOUNT_IS_VERIFIED,
+  CONFIRM_EMAIL,
+  EMAIL_IS_NOT_VERIFIED,
+  EMAIL_IS_VERIFIED,
+  LINK_IS_EXPIRED,
+  USER_EXISTS,
+} from '../constants/text.js';
+import { StatusCode } from '../enums/status-code.js';
+import User from '../models/User.js';
+import VerifyToken from '../models/VerifyToken.js';
+import type { ILoginResponse } from '../types/user.js';
+import { EXPIRES_KEY, SECRET_KEY } from '../utils/constants.js';
+import * as ERRORS from '../utils/errors.js';
+import { NOT_FOUND_USER } from '../utils/errors.js';
+import { sendAboutOnlineStatus } from '../webSocketServer.js';
+
 import crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -6,22 +23,8 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import * as nodemailer from 'nodemailer';
 
-import { sendAboutOnlineStatus } from '../../server.js';
-import {
-  ACCOUNT_IS_VERIFIED,
-  CONFIRM_EMAIL,
-  EMAIL_IS_NOT_VERIFIED,
-  EMAIL_IS_VERIFIED,
-  LINK_IS_EXPIRED,
-  USER_EXISTS,
-} from '../constants/text.ts';
-import { StatusCode } from '../enums/status-code.enum.ts';
-import User from '../models/User.js';
-import VerifyToken from '../models/VerifyToken.js';
-import type { ILoginResponse } from '../types/user.interface.js';
-import { EXPIRES_KEY, SECRET_KEY } from '../utils/constants.js';
-import * as ERRORS from '../utils/errors.js';
-import { NOT_FOUND_USER } from '../utils/errors.js';
+
+
 
 const __dirname = path.resolve(path.dirname(''));
 
@@ -80,7 +83,7 @@ export const login = async (req, res) => {
     .exec()
     .then(data => {
       const user = data as unknown as ILoginResponse;
-      if (!user) {
+      if (!user || !user.passwordHash) {
         return res.status(StatusCode.NotFound).json({
           message: ERRORS.NOT_FOUND_USER,
         });
@@ -248,7 +251,7 @@ const createTokenAndSendMail = (user, toEmail, res) => {
         if (error) {
           console.error('Ошибка отправки:', error);
           res.status(StatusCode.UndefinedError).json({
-            message: error.response,
+            message: error.message,
           });
         } else {
           console.log('Письмо отправлено:', info.messageId);

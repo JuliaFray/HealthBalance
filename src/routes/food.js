@@ -1,8 +1,9 @@
-import express from 'express';
 
-import { getFoodById, getFoodList } from '../controllers/FoodController.ts';
+import { getFoodById, getFoodList } from '../controllers/FoodController.js';
 import checkAuth from '../utils/checkAuth.js';
 import { enhanceHeaders } from '../utils/checkAuth.js';
+
+import express from 'express';
 
 const router = express.Router();
 

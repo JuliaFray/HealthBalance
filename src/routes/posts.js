@@ -1,11 +1,9 @@
-import express from 'express';
 
 import {
   addArticleToFavorite,
   createArticle,
   createComment,
   deleteArticle,
-  deletePostImage,
   getAllArticles,
   getArticleById,
   getPopularArticles,
@@ -14,11 +12,13 @@ import {
   toggleArticleRating,
   toggleCommentRating,
   updateArticle,
-} from '../controllers/PostController.ts';
+} from '../controllers/PostController.js';
 import checkAuth, { enhanceHeaders } from '../utils/checkAuth.js';
 import upload from '../utils/gridFsStorage.js';
 import handleErrors from '../utils/handleErrors.js';
 import { postCreateValidation } from '../utils/validation.js';
+
+import express from 'express';
 
 const router = express.Router();
 
@@ -33,8 +33,8 @@ router.get('/popular', getPopularArticles);
 router.get('/recommendations', getRecommendationArticles);
 router.get('/:id', getArticleById);
 router.post('/', postCreateValidation, upload.single('image'), handleErrors, createArticle);
-router.put('/:id', postCreateValidation, deletePostImage, upload.single('image'), handleErrors, updateArticle);
-router.delete('/:id', deletePostImage, deleteArticle);
+router.put('/:id', postCreateValidation, handleErrors, updateArticle);
+// router.delete('/:id', deletePostImage, deleteArticle);
 
 router.post('/:id/comment', createComment);
 router.put('/:id/comment-rating', toggleCommentRating);

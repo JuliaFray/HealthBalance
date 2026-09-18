@@ -1,64 +1,66 @@
-import {MongoClient, ObjectId} from 'mongodb';
-import {UNDEFINED_ERROR} from '../utils/errors.js';
-import mongoose from 'mongoose';
-import {DATABASE_NAME} from "../utils/constants.js";
+import { gf } from '../config.js'
+import { DATABASE_NAME } from '../utils/constants.js';
+import { UNDEFINED_ERROR } from '../utils/errors.js';
 
-const url = process.env.DB_URI_GET_FILES;
-const mongoClient = new MongoClient(url);
+import { MongoClient, ObjectId } from 'mongodb';
+import mongoose from 'mongoose';
+
+const url = gf;
+const mongoClient = new MongoClient(url, { useNewUrlParser: true });
 
 const connect = mongoose.createConnection(url);
 
 let gridFS;
 
 connect.once('open', () => {
-    gridFS = new mongoose.mongo.GridFSBucket(connect.db, {
-        bucketName: 'photos.files'
-    });
+  gridFS = new mongoose.mongo.GridFSBucket(connect.db, {
+    bucketName: 'photos.files',
+  });
 });
 
 export const uploadFile = (req, res) => {
-    const file = req.file
+  const file = req.file;
 
-    res.send({
-        resultCode: 0,
-        id: file.id,
-        name: file.filename,
-        contentType: file.contentType,
-    })
-}
+  res.send({
+    resultCode: 0,
+    id: file.id,
+    name: file.filename,
+    contentType: file.contentType,
+  });
+};
 
 export const getFileById = async (req, res) => {
-    try {
-        res.send({
-            resultCode: 0,
-            file: getFile(req.params.id)
-        });
-    } catch (err) {
-        console.log(err)
-        res.status(500).send({
-            resultCode: 1,
-            message: UNDEFINED_ERROR
-        })
-    }
-}
+  try {
+    res.send({
+      resultCode: 0,
+      file: getFile(req.params.id),
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({
+      resultCode: 1,
+      message: UNDEFINED_ERROR,
+    });
+  }
+};
 
 export const getFile = async (imageId) => {
-    await mongoClient.connect()
+  await mongoClient.connect();
 
-    const chunk = mongoClient.db(DATABASE_NAME)
-        .collection('photos.chunks')
-        .find({'files_id': new ObjectId(imageId)}).toArray();
+  const chunk = mongoClient.db(DATABASE_NAME)
+    .collection('photos.chunks')
+    .find({ 'files_id': new ObjectId(imageId) }).toArray();
 
-    const images = [];
-    (await chunk).forEach(it => images.push(it));
+  const images = [];
+  (await chunk).forEach(it => images.push(it));
 
-    return images;
-}
+  return images;
+};
 
 export const removeFile = async (fileId) => {
-    await mongoClient.connect()
+  await mongoClient.connect();
 
-    await mongoClient.db(DATABASE_NAME)
-        .collection('photos.chunks')
-        .deleteOne({'files_id': new ObjectId(fileId)});
-}
+  await mongoClient.db(DATABASE_NAME)
+    .collection('photos.chunks')
+    .deleteOne({ 'files_id': new ObjectId(fileId) });
+};
