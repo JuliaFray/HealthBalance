@@ -1,9 +1,7 @@
-
 import {
   addArticleToFavorite,
   createArticle,
   createComment,
-  deleteArticle,
   getAllArticles,
   getArticleById,
   getPopularArticles,

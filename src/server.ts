@@ -74,27 +74,40 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+  if (req.path !== '/' && !req.path.includes('.')) {
+    res.set({
+      'Access-Control-Allow-Credentials': true,
+      'Access-Control-Allow-Origin': req.headers.origin || '*',
+      'Access-Control-Allow-Headers': 'X-Requested-With,Content-Type',
+      'Access-Control-Allow-Methods': 'PUT,POST,GET,DELETE,OPTIONS',
+      'Content-Type': 'application/json; charset=utf-8'
+    })
+  }
+  req.method === 'OPTIONS' ? res.status(200).end() : next()
+})
+
 // Health check route
-app.get('/health', (req, res: Response) => {
+app.get('/', (req, res: Response) => {
   res.status(200).json({
     success: true,
-    message: 'HR Dashboard API is running',
+    message: 'HB Dashboard API is running',
     timestamp: new Date().toISOString(),
   });
 });
 
 // Routing
-app.use('/api', indexRouter);
-app.use('/api/auth', authRouter);
-app.use('/api/posts', postsRouter);
-app.use('/api/users', usersRouter);
-app.use('/api/dialog', dialogRouter);
-app.use('/api/diet', dietRouter);
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/api/diary', diaryRouter);
-app.use('/api/v1/food', openFoodRouter);
-app.use('/api/v2/food', fatsecretRouter);
-app.use('/api/v3/food', foodRouter);
+app.use('/tags', indexRouter);
+app.use('/auth', authRouter);
+app.use('/posts', postsRouter);
+app.use('/users', usersRouter);
+app.use('/dialog', dialogRouter);
+app.use('/diet', dietRouter);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/diary', diaryRouter);
+app.use('/v1/food', openFoodRouter);
+app.use('/v2/food', fatsecretRouter);
+app.use('/v3/food', foodRouter);
 
 // // catch 404 and forward to error handler
 // app.use((req, res, next) => {
